@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國中全科自主學習與測驗中心</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Google Fonts (Noto Sans TC 與 Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <!-- 引入 Phosphor Icons 圖示庫 -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Inter"', '"Noto Sans TC"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 背景極淡點狀網格紋理 */
+        .bg-dot-pattern {
+            background-color: #f8fafc;
+            background-image: radial-gradient(rgba(148, 163, 184, 0.28) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        /* 隱藏橫向捲動條但保留滑動功能 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* 彈出視窗開啟縮放淡入動畫 */
+        @keyframes modalIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.95) translateY(8px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        .animate-modal-in {
+            animation: modalIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="bg-dot-pattern text-slate-800 min-h-screen flex flex-col selection:bg-indigo-100 selection:text-indigo-700 relative overflow-x-hidden">
+
+    <!-- 頂部柔和漸層光暈裝飾背景 -->
+    <div class="pointer-events-none fixed inset-x-0 top-0 -z-10 overflow-hidden h-[460px]">
+        <div class="absolute -top-28 left-1/4 w-[500px] h-[340px] rounded-full bg-gradient-to-tr from-indigo-200/45 via-sky-200/35 to-purple-200/35 blur-3xl"></div>
+        <div class="absolute -top-20 right-1/4 w-[420px] h-[300px] rounded-full bg-gradient-to-bl from-emerald-200/35 via-teal-100/30 to-indigo-100/30 blur-3xl"></div>
+    </div>
+
+    <!-- 家長模式頂部提示橫幅 (預設隱藏) -->
+    <div id="parentBanner" class="hidden bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-white px-4 py-2.5 shadow-md relative z-40">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 text-sm font-medium">
+            <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                    <i class="ph-fill ph-shield-check text-lg"></i>
+                </span>
+                <span>您目前已進入 <strong>家長管理模式</strong> — 可自由新增、編輯、刪除測驗卡片與科目，變更將自動儲存。</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="openSettingsModal()" class="bg-black/15 hover:bg-black/25 text-white px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 backdrop-blur-sm transition cursor-pointer">
+                    <i class="ph-bold ph-gear"></i> 系統與備份設定
+                </button>
+                <button onclick="exitParentMode()" class="bg-white text-amber-700 hover:bg-amber-50 px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer">
+                    <i class="ph-bold ph-sign-out"></i> 退出家長模式
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 毛玻璃黏性頂部導航列 -->
+    <header class="bg-white/80 backdrop-blur-xl border-b border-slate-200/80 sticky top-0 z-30 shadow-[0_1px_12px_rgba(15,23,42,0.03)]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
+            <!-- 網站 Logo 與標題 -->
+            <div class="flex items-center gap-3.5">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-500 to-sky-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/25 shrink-0 ring-4 ring-indigo-50">
+                    <i class="ph-bold ph-graduation-cap text-2xl sm:text-[26px]"></i>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-xl font-extrabold text-slate-900 tracking-tight leading-tight">國中全科自主學習與測驗中心</h1>
+                    <p class="text-xs text-slate-500 hidden sm:flex items-center gap-1.5 mt-0.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        專為國中生打造的線上複習與題庫導航
+                    </p>
+                </div>
+            </div>
+
+            <!-- 右側功能區：搜尋框 & 家長模式按鈕 -->
+            <div class="flex items-center gap-2.5 sm:gap-3">
+                <!-- 桌面版搜尋框 -->
+                <div class="relative hidden md:block w-72">
+                    <i class="ph-bold ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="searchInputDesktop" oninput="handleSearch(this.value)" placeholder="搜尋測驗、單元或平台..." 
+                        class="w-full pl-10 pr-9 py-2.5 bg-slate-100/90 hover:bg-slate-200/60 focus:bg-white border border-slate-200/70 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 rounded-full text-sm outline-none transition">
+                    <button id="clearSearchDesktop" onclick="clearSearch()" title="清除搜尋" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                        <i class="ph-fill ph-x-circle text-base"></i>
+                    </button>
+                </div>
+
+                <!-- 家長模式切換按鈕 -->
+                <button id="parentToggleBtn" onclick="toggleParentMode()" 
+                    class="px-4 py-2 sm:px-4 sm:py-2.5 rounded-full text-sm font-semibold flex items-center gap-1.5 transition shadow-sm border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 cursor-pointer shrink-0">
+                    <i id="parentToggleIcon" class="ph-bold ph-lock-key text-indigo-600 text-base"></i>
+                    <span id="parentToggleText">家長模式</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 手機版搜尋框 -->
+        <div class="md:hidden px-4 pb-3.5">
+            <div class="relative w-full">
+                <i class="ph-bold ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="searchInputMobile" oninput="handleSearch(this.value)" placeholder="搜尋測驗名稱、單元或關鍵字..." 
+                    class="w-full pl-10 pr-9 py-2.5 bg-slate-100/90 focus:bg-white border border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 rounded-full text-sm outline-none transition">
+                <button id="clearSearchMobile" onclick="clearSearch()" title="清除搜尋" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                    <i class="ph-fill ph-x-circle text-base"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要內容區塊 -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+        <!-- 精簡高質感 Hero 歡迎與統計區塊 -->
+        <section id="heroCard" class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-blue-600 to-sky-500 text-white p-6 sm:p-8 mb-7 shadow-xl shadow-indigo-500/15 border border-white/20 transition-all duration-300">
+            <!-- Hero 背景微光裝飾圓 -->
+            <div class="pointer-events-none absolute -right-12 -top-12 w-64 h-64 rounded-full bg-white/15 blur-2xl"></div>
+            <div class="pointer-events-none absolute left-1/3 -bottom-20 w-72 h-52 rounded-full bg-sky-300/20 blur-2xl"></div>
+
+            <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <!-- 左側：激勵標語與狀態說明 -->
+                <div class="max-w-2xl">
+                    <div id="heroBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-xs font-semibold tracking-wide mb-3">
+                        <i class="ph-fill ph-sparkle text-amber-300"></i>
+                        <span>每日自主練習・穩健累積實力</span>
+                    </div>
+                    <h2 id="heroTitle" class="text-2xl sm:text-3xl font-extrabold tracking-tight leading-snug mb-2">
+                        今天想挑戰哪一科的線上測驗呢？
+                    </h2>
+                    <p id="heroDesc" class="text-sm sm:text-base text-white/85 leading-relaxed">
+                        精選教育部因材網、酷英網、均一教育平台與會考歷屆題庫，按科目快速篩選，點選即可立即開啟複習。
+                    </p>
+                </div>
+
+                <!-- 右側：即時統計儀表小卡 -->
+                <div class="grid grid-cols-2 gap-3 sm:gap-4 shrink-0">
+                    <div class="bg-white/15 backdrop-blur-md border border-white/20 rounded-2xl px-4 py-3.5 sm:px-5 sm:py-4 min-w-[130px] sm:min-w-[148px]">
+                        <div class="flex items-center gap-2 text-white/80 text-xs font-medium mb-1">
+                            <i class="ph-bold ph-books text-base text-white"></i>
+                            <span>收錄科目</span>
+                        </div>
+                        <div class="flex items-baseline gap-1">
+                            <span id="statSubjectCount" class="text-2xl sm:text-3xl font-extrabold tracking-tight">0</span>
+                            <span class="text-xs text-white/75 font-medium">大核心領域</span>
+                        </div>
+                    </div>
+                    <div class="bg-white/15 backdrop-blur-md border border-white/20 rounded-2xl px-4 py-3.5 sm:px-5 sm:py-4 min-w-[130px] sm:min-w-[148px]">
+                        <div class="flex items-center gap-2 text-white/80 text-xs font-medium mb-1">
+                            <i class="ph-bold ph-exam text-base text-white"></i>
+                            <span>精選測驗</span>
+                        </div>
+                        <div class="flex items-baseline gap-1">
+                            <span id="statLinkCount" class="text-2xl sm:text-3xl font-extrabold tracking-tight">0</span>
+                            <span class="text-xs text-white/75 font-medium">個學習資源</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 科目篩選標籤列 & 家長新增按鈕區 -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+            <!-- 科目分類膠囊標籤 (支援橫向捲動並隱藏捲軸) -->
+            <div id="subjectTabs" class="flex items-center gap-2.5 overflow-x-auto py-1 no-scrollbar">
+                <!-- 由 JS 動態渲染科目標籤 -->
+            </div>
+
+            <!-- 家長模式專屬操作按鈕列 -->
+            <div id="parentActionButtons" class="hidden flex items-center gap-2.5 shrink-0">
+                <button onclick="openSubjectModal()" class="px-4 py-2.5 rounded-full text-sm font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 flex items-center gap-1.5 shadow-sm transition cursor-pointer">
+                    <i class="ph-bold ph-folders text-amber-600"></i> 管理科目
+                </button>
+                <button onclick="openLinkModal()" class="px-5 py-2.5 rounded-full text-sm font-semibold bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white flex items-center gap-1.5 shadow-md shadow-indigo-500/25 transition cursor-pointer">
+                    <i class="ph-bold ph-plus"></i> 新增測驗連結
+                </button>
+            </div>
+        </div>
+
+        <!-- 統計資訊列 -->
+        <div class="flex items-center justify-between mb-5 px-1 text-xs sm:text-sm text-slate-500">
+            <div id="resultSummary" class="font-medium flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                <span>顯示全部測驗資源</span>
+            </div>
+            <div class="hidden sm:flex items-center gap-1.5 text-slate-400 bg-white/70 px-3 py-1 rounded-full border border-slate-200/70">
+                <i class="ph-bold ph-arrow-square-out text-indigo-500"></i>
+                <span>點擊卡片將於新分頁開啟測驗網站</span>
+            </div>
+        </div>
+
+        <!-- 測驗資源卡片網格 -->
+        <div id="cardsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- 由 JS 動態渲染測驗卡片 -->
+        </div>
+
+        <!-- 空狀態提示 (搜尋無結果或該科無資料) -->
+        <div id="emptyState" class="hidden bg-white/90 backdrop-blur-sm rounded-3xl border border-dashed border-slate-300 p-12 text-center my-8 shadow-sm">
+            <div class="w-16 h-16 bg-indigo-50 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <i class="ph-duotone ph-magnifying-glass text-4xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-1.5">找不到符合的測驗資源</h3>
+            <p class="text-sm text-slate-500 mb-5" id="emptyStateDesc">請嘗試切換其他科目分類，或清除搜尋關鍵字。</p>
+            <button onclick="resetFilters()" class="px-5 py-2.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-full text-sm font-semibold shadow-sm shadow-indigo-500/20 transition cursor-pointer">
+                顯示全部測驗
+            </button>
+        </div>
+    </main>
+
+    <!-- 頁尾 -->
+    <footer class="bg-white/80 backdrop-blur-md border-t border-slate-200/80 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+            <p class="flex items-center gap-1.5 font-medium">
+                <i class="ph-fill ph-graduation-cap text-indigo-500 text-base"></i>
+                © 2026 國中全科自主學習與測驗中心 · 陪伴孩子穩健成長
+            </p>
+            <p class="text-slate-400">資料儲存於本機瀏覽器，建議家長定期使用匯出功能備份設定</p>
+        </div>
+    </footer>
+
+    <!-- ==================== 彈出視窗 (Modals) ==================== -->
+
+    <!-- 1. 家長密碼驗證視窗 -->
+    <div id="passwordModal" class="hidden fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 sm:p-7 shadow-2xl border border-slate-100 animate-modal-in">
+            <div class="flex items-start justify-between mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                        <i class="ph-bold ph-lock-key text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900">進入家長管理模式</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">請輸入家長驗證密碼以解鎖編輯權限</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('passwordModal')" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-full transition cursor-pointer">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="verifyParentPassword(event)">
+                <div class="mb-5">
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">管理密碼</label>
+                    <input type="password" id="parentPasswordInput" required placeholder="預設密碼為 1234" 
+                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/15 rounded-2xl text-base outline-none transition">
+                    <p id="passwordErrorMsg" class="hidden text-xs text-rose-600 mt-2 flex items-center gap-1 font-medium">
+                        <i class="ph-fill ph-warning-circle text-sm"></i> 密碼錯誤，請重新輸入（預設為 1234）
+                    </p>
+                </div>
+                <div class="flex items-center justify-end gap-2.5">
+                    <button type="button" onclick="closeModal('passwordModal')" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+                        取消
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/20 transition cursor-pointer">
+                        確認解鎖
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. 新增 / 編輯測驗連結視窗 -->
+    <div id="linkModal" class="hidden fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto animate-modal-in">
+            <div class="flex items-center justify-between mb-5">
+                <h3 id="linkModalTitle" class="text-lg font-bold text-slate-900 flex items-center gap-2.5">
+                    <i class="ph-bold ph-plus-circle text-indigo-600 text-2xl"></i> 新增測驗連結
+                </h3>
+                <button onclick="closeModal('linkModal')" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-full transition cursor-pointer">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="saveLinkItem(event)" class="space-y-4">
+                <input type="hidden" id="editLinkId">
+                
+                <!-- 科目選擇或自訂 -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">所屬科目 <span class="text-rose-500">*</span></label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <select id="linkSubjectSelect" onchange="toggleCustomSubjectInput()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/15 rounded-2xl text-sm outline-none transition">
+                            <!-- 由 JS 動態填入現有科目 -->
+                        </select>
+                        <input type="text" id="customSubjectInput" placeholder="輸入新科目名稱 (如: 理化)" 
+                            class="hidden w-full px-3.5 py-2.5 bg-amber-50/60 border border-amber-300 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/15 rounded-2xl text-sm outline-none transition">
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1.5">可從清單選擇，或選「+ 新增自訂科目」自動建立標籤。</p>
+                </div>
+
+                <!-- 測驗標題 -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">測驗網站 / 單元標題 <span class="text-rose-500">*</span></label>
+                    <input type="text" id="linkTitleInput" required placeholder="例如：Cool English 國中字彙測驗區" 
+                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/15 rounded-2xl text-sm outline-none transition">
+                </div>
+
+                <!-- 網址 URL -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">測驗網址 (URL) <span class="text-rose-500">*</span></label>
+                    <input type="url" id="linkUrlInput" required placeholder="https://..." 
+                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/15 rounded-2xl text-sm outline-none transition font-mono">
+                </div>
+
+                <!-- 標籤 / 難度 -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">學習標籤 / 適用年級 (選填)</label>
+                    <input type="text" id="linkTagInput" placeholder="例如：七年級上學期、會考衝刺、遊戲化練習" 
+                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/15 rounded-2xl text-sm outline-none transition">
+                </div>
+
+                <!-- 簡短說明 -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">內容說明與家長備註 <span class="text-rose-500">*</span></label>
+                    <textarea id="linkDescInput" rows="3" required placeholder="簡短說明這個測驗網站的特色或建議練習方式..." 
+                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/15 rounded-2xl text-sm outline-none transition resize-none"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('linkModal')" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+                        取消
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/20 transition cursor-pointer">
+                        儲存測驗連結
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. 科目標籤管理視窗 -->
+    <div id="subjectModal" class="hidden fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 max-h-[85vh] flex flex-col animate-modal-in">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2.5">
+                    <i class="ph-bold ph-folders text-indigo-600 text-2xl"></i> 科目標籤管理
+                </h3>
+                <button onclick="closeModal('subjectModal')" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-full transition cursor-pointer">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+            
+            <!-- 新增科目表單 -->
+            <form onsubmit="addNewSubject(event)" class="flex gap-2 mb-4">
+                <input type="text" id="newSubjectNameInput" required maxlength="10" placeholder="輸入新科目名稱 (如：數學、理化)" 
+                    class="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/15 rounded-2xl text-sm outline-none transition">
+                <button type="submit" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-sm font-semibold shrink-0 shadow-sm transition cursor-pointer">
+                    新增
+                </button>
+            </form>
+
+            <p class="text-xs text-slate-500 mb-2.5">目前科目標籤（僅可刪除沒有測驗卡片的空科目）：</p>
+            
+            <!-- 科目清單 -->
+            <div id="subjectManageList" class="flex-1 overflow-y-auto space-y-2 pr-1">
+                <!-- 由 JS 動態生成 -->
+            </div>
+
+            <div class="mt-5 pt-3 border-t border-slate-100 flex justify-end">
+                <button onclick="closeModal('subjectModal')" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition cursor-pointer">
+                    完成
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 系統設定、密碼修改與匯出/匯入視窗 -->
+    <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto space-y-5 animate-modal-in">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2.5">
+                    <i class="ph-bold ph-gear text-slate-700 text-2xl"></i> 家長系統與備份設定
+                </h3>
+                <button onclick="closeModal('settingsModal')" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-full transition cursor-pointer">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <!-- 修改家長密碼 -->
+            <div class="bg-slate-50/90 p-4 rounded-2xl border border-slate-200/80">
+                <h4 class="text-sm font-bold text-slate-800 mb-2.5 flex items-center gap-1.5">
+                    <i class="ph-bold ph-key text-amber-600 text-base"></i> 修改家長管理密碼
+                </h4>
+                <form onsubmit="changeParentPassword(event)" class="flex gap-2">
+                    <input type="text" id="newPasswordInput" required minlength="4" placeholder="輸入新密碼 (至少4碼)" 
+                        class="flex-1 px-3.5 py-2 bg-white border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15 rounded-xl text-sm outline-none transition">
+                    <button type="submit" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-semibold shrink-0 transition cursor-pointer">
+                        更新密碼
+                    </button>
+                </form>
+            </div>
+
+            <!-- 匯出與匯入 JSON -->
+            <div class="bg-slate-50/90 p-4 rounded-2xl border border-slate-200/80 space-y-3">
+                <h4 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                    <i class="ph-bold ph-arrows-left-right text-indigo-600 text-base"></i> 跨裝置資料同步 (JSON 備份)
+                </h4>
+                <p class="text-xs text-slate-500 leading-relaxed">可將目前的科目與測驗連結匯出為檔案，在其他電腦或手機上匯入還原。</p>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button onclick="exportData()" class="px-3 py-2.5 bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition cursor-pointer">
+                        <i class="ph-bold ph-download-simple text-base"></i> 匯出設定檔
+                    </button>
+                    <label class="px-3 py-2.5 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition cursor-pointer">
+                        <i class="ph-bold ph-upload-simple text-base"></i> 匯入設定檔
+                        <input type="file" id="importFileInput" accept=".json" onchange="importData(event)" class="hidden">
+                    </label>
+                </div>
+            </div>
+
+            <!-- 恢復預設值 -->
+            <div class="bg-rose-50/70 p-4 rounded-2xl border border-rose-200/80">
+                <h4 class="text-sm font-bold text-rose-800 mb-1 flex items-center gap-1.5">
+                    <i class="ph-bold ph-arrow-counter-clockwise text-base"></i> 恢復系統預設值
+                </h4>
+                <p class="text-xs text-rose-600/85 mb-3 leading-relaxed">將清除所有自訂修改，重新載入初始六大核心科目與精選測驗連結。</p>
+                <div id="resetConfirmArea">
+                    <button type="button" onclick="showResetConfirm()" class="w-full py-2.5 bg-white hover:bg-rose-100 text-rose-600 border border-rose-300 rounded-xl text-xs font-bold transition cursor-pointer">
+                        恢復初始六科設定
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. 刪除確認自訂對話框 (取代 confirm()) -->
+    <div id="deleteConfirmModal" class="hidden fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 sm:p-7 shadow-2xl border border-slate-100 animate-modal-in">
+            <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mb-4">
+                <i class="ph-bold ph-trash text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-1.5" id="deleteConfirmTitle">確定要刪除此測驗嗎？</h3>
+            <p class="text-sm text-slate-500 mb-6 leading-relaxed" id="deleteConfirmDesc">刪除後將無法復原，確定要移除此項目嗎？</p>
+            <div class="flex items-center justify-end gap-2.5">
+                <button onclick="closeModal('deleteConfirmModal')" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+                    取消
+                </button>
+                <button id="confirmDeleteBtn" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-500/20 transition cursor-pointer">
+                    確定刪除
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部 Toast 通知提示框 -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-900/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-xl border border-white/10 flex items-center gap-2.5 text-sm font-medium">
+            <i id="toastIcon" class="ph-fill ph-check-circle text-emerald-400 text-xl"></i>
+            <span id="toastMessage">操作成功</span>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 1. 初始預設資料與色彩/圖示系統 ====================
+        const STORAGE_KEY = 'tw_jh_quiz_portal_data_v1';
+        const PWD_KEY = 'tw_jh_quiz_portal_pwd_v1';
+
+        // 預設六大核心科目專屬圖示與漸層配色主題
+        const SUBJECT_THEMES = {
+            '國文': {
+                icon: 'ph-book-open-text',
+                badge: 'bg-rose-50 text-rose-700 border-rose-200/80',
+                dot: 'bg-rose-500',
+                accentBar: 'from-rose-500 to-pink-400',
+                activeTab: 'bg-gradient-to-r from-rose-600 to-pink-500 text-white shadow-md shadow-rose-500/25 border-transparent',
+                hoverBorder: 'hover:border-rose-300',
+                btnHover: 'group-hover:bg-rose-600 group-hover:text-white group-hover:shadow-rose-500/25'
+            },
+            '英文': {
+                icon: 'ph-translate',
+                badge: 'bg-indigo-50 text-indigo-700 border-indigo-200/80',
+                dot: 'bg-indigo-500',
+                accentBar: 'from-indigo-500 to-blue-400',
+                activeTab: 'bg-gradient-to-r from-indigo-600 to-blue-500 text-white shadow-md shadow-indigo-500/25 border-transparent',
+                hoverBorder: 'hover:border-indigo-300',
+                btnHover: 'group-hover:bg-indigo-600 group-hover:text-white group-hover:shadow-indigo-500/25'
+            },
+            '地理': {
+                icon: 'ph-globe-hemisphere-east',
+                badge: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+                dot: 'bg-emerald-500',
+                accentBar: 'from-emerald-500 to-teal-400',
+                activeTab: 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-md shadow-emerald-500/25 border-transparent',
+                hoverBorder: 'hover:border-emerald-300',
+                btnHover: 'group-hover:bg-emerald-600 group-hover:text-white group-hover:shadow-emerald-500/25'
+            },
+            '歷史': {
+                icon: 'ph-scroll',
+                badge: 'bg-amber-50 text-amber-800 border-amber-200/80',
+                dot: 'bg-amber-500',
+                accentBar: 'from-amber-500 to-orange-400',
+                activeTab: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/25 border-transparent',
+                hoverBorder: 'hover:border-amber-300',
+                btnHover: 'group-hover:bg-amber-600 group-hover:text-white group-hover:shadow-amber-500/25'
+            },
+            '公民': {
+                icon: 'ph-scales',
+                badge: 'bg-violet-50 text-violet-700 border-violet-200/80',
+                dot: 'bg-violet-500',
+                accentBar: 'from-violet-500 to-purple-400',
+                activeTab: 'bg-gradient-to-r from-violet-600 to-purple-500 text-white shadow-md shadow-violet-500/25 border-transparent',
+                hoverBorder: 'hover:border-violet-300',
+                btnHover: 'group-hover:bg-violet-600 group-hover:text-white group-hover:shadow-violet-500/25'
+            },
+            '生物': {
+                icon: 'ph-dna',
+                badge: 'bg-teal-50 text-teal-700 border-teal-200/80',
+                dot: 'bg-teal-500',
+                accentBar: 'from-teal-500 to-cyan-400',
+                activeTab: 'bg-gradient-to-r from-teal-600 to-cyan-500 text-white shadow-md shadow-teal-500/25 border-transparent',
+                hoverBorder: 'hover:border-teal-300',
+                btnHover: 'group-hover:bg-teal-600 group-hover:text-white group-hover:shadow-teal-500/25'
+            }
+        };
+
+        // 自訂新科目的備用色彩循環池 (統一搭配 ph-bookmark-simple)
+        const FALLBACK_THEMES = [
+            {
+                icon: 'ph-bookmark-simple',
+                badge: 'bg-sky-50 text-sky-700 border-sky-200/80',
+                dot: 'bg-sky-500',
+                accentBar: 'from-sky-500 to-blue-400',
+                activeTab: 'bg-gradient-to-r from-sky-600 to-blue-500 text-white shadow-md shadow-sky-500/25 border-transparent',
+                hoverBorder: 'hover:border-sky-300',
+                btnHover: 'group-hover:bg-sky-600 group-hover:text-white group-hover:shadow-sky-500/25'
+            },
+            {
+                icon: 'ph-bookmark-simple',
+                badge: 'bg-orange-50 text-orange-700 border-orange-200/80',
+                dot: 'bg-orange-500',
+                accentBar: 'from-orange-500 to-amber-400',
+                activeTab: 'bg-gradient-to-r from-orange-600 to-amber-500 text-white shadow-md shadow-orange-500/25 border-transparent',
+                hoverBorder: 'hover:border-orange-300',
+                btnHover: 'group-hover:bg-orange-600 group-hover:text-white group-hover:shadow-orange-500/25'
+            },
+            {
+                icon: 'ph-bookmark-simple',
+                badge: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200/80',
+                dot: 'bg-fuchsia-500',
+                accentBar: 'from-fuchsia-500 to-pink-400',
+                activeTab: 'bg-gradient-to-r from-fuchsia-600 to-pink-500 text-white shadow-md shadow-fuchsia-500/25 border-transparent',
+                hoverBorder: 'hover:border-fuchsia-300',
+                btnHover: 'group-hover:bg-fuchsia-600 group-hover:text-white group-hover:shadow-fuchsia-500/25'
+            },
+            {
+                icon: 'ph-bookmark-simple',
+                badge: 'bg-cyan-50 text-cyan-700 border-cyan-200/80',
+                dot: 'bg-cyan-500',
+                accentBar: 'from-cyan-500 to-teal-400',
+                activeTab: 'bg-gradient-to-r from-cyan-600 to-teal-500 text-white shadow-md shadow-cyan-500/25 border-transparent',
+                hoverBorder: 'hover:border-cyan-300',
+                btnHover: 'group-hover:bg-cyan-600 group-hover:text-white group-hover:shadow-cyan-500/25'
+            }
+        ];
+
+        // 預設資料結構 (完整保留全部 6 科與 12 筆測驗資料)
+        const DEFAULT_DATA = {
+            subjects: ['國文', '英文', '地理', '歷史', '公民', '生物'],
+            links: [
+                // 國文
+                {
+                    id: 'chi-1',
+                    subject: '國文',
+                    title: '教育部因材網－國語文素養與閱讀測驗',
+                    url: 'https://adl.edu.tw/',
+                    tag: '官方題庫・閱讀理解',
+                    desc: '教育部建置之適性化學習平台，提供國中各版本形音義、成語及長文閱讀素養線上診斷測驗。'
+                },
+                {
+                    id: 'chi-2',
+                    subject: '國文',
+                    title: '國中教育會考歷屆試題網（國文科）',
+                    url: 'https://cap.rcpet.edu.tw/',
+                    tag: '會考衝刺・歷屆真題',
+                    desc: '心測中心官方歷屆會考國文科試題與詳解下載，適合八、九年級熟悉大考題型與文言文語感。'
+                },
+                // 英文
+                {
+                    id: 'eng-1',
+                    subject: '英文',
+                    title: 'Cool English 酷英網－國中學習專區',
+                    url: 'https://www.coolenglish.edu.tw/',
+                    tag: '聽說讀寫・免費資源',
+                    desc: '國教署委託台師大建置，涵蓋國中基本 1200 字彙測驗、文法練習、會考聽力模擬與互動遊戲。'
+                },
+                {
+                    id: 'eng-2',
+                    subject: '英文',
+                    title: 'Quizlet 國中核心單字互動字卡與測驗',
+                    url: 'https://quizlet.com/tw',
+                    tag: '單字記憶・拼寫測驗',
+                    desc: '透過翻轉字卡、配對遊戲與即時拼寫測驗，高效率背誦翰林、康軒、南一各課核心單字。'
+                },
+                // 地理
+                {
+                    id: 'geo-1',
+                    subject: '地理',
+                    title: '均一教育平台－國中地理影音與練習題',
+                    url: 'https://www.junyiacademy.org/',
+                    tag: '觀念釐清・即時回饋',
+                    desc: '涵蓋台灣地理、中國地理與世界地理單元，每段教學影片皆搭配即時互動隨堂測驗與解析。'
+                },
+                {
+                    id: 'geo-2',
+                    subject: '地理',
+                    title: 'Seterra 世界與台灣地圖互動小測驗',
+                    url: 'https://www.geoguessr.com/seterra/zh-tw',
+                    tag: '地圖位置・趣味挑戰',
+                    desc: '透過限時點擊地圖遊戲，快速熟記台灣各縣市地形、氣候區、世界七大洲與重要國家位置。'
+                },
+                // 歷史
+                {
+                    id: 'his-1',
+                    subject: '歷史',
+                    title: 'PaGamO 素養品學堂與國中歷史任務',
+                    url: 'https://www.pagamo.org/',
+                    tag: '遊戲化學習・佔領領地',
+                    desc: '將台灣史、中國史與世界史題目融入線上佔領領地遊戲，提升孩子自主刷題複習的動力。'
+                },
+                {
+                    id: 'his-2',
+                    subject: '歷史',
+                    title: 'LearnMode 學習吧－國中歷史課綱測驗',
+                    url: 'https://www.learnmode.net/',
+                    tag: '108課綱・單元複習',
+                    desc: '整合各家出版社課綱進度，提供史前文化至現代史的分章節線上測驗卷與自動批改功能。'
+                },
+                // 公民
+                {
+                    id: 'civ-1',
+                    subject: '公民',
+                    title: '均一教育平台－國中公民與社會題庫',
+                    url: 'https://www.junyiacademy.org/',
+                    tag: '法律常識・經濟觀念',
+                    desc: '針對個人成長、家庭社會、政府體制、法律責任與經濟生活等單元提供系統化練習題。'
+                },
+                {
+                    id: 'civ-2',
+                    subject: '公民',
+                    title: '全國法規資料庫－國中生法律知識競賽題庫',
+                    url: 'https://law.moj.gov.tw/',
+                    tag: '生活法律・情境題',
+                    desc: '法務部建置之生活法律知識平台，協助國中生理解民法、刑法及少年事件處理法常見考點。'
+                },
+                // 生物
+                {
+                    id: 'bio-1',
+                    subject: '生物',
+                    title: '均一教育平台－七年級生物全單元測驗',
+                    url: 'https://www.junyiacademy.org/',
+                    tag: '細胞遺傳・生態演化',
+                    desc: '完整收錄細胞構造、養分消化、循環呼吸、神經內分泌、遺傳法則與生態系互動測驗題。'
+                },
+                {
+                    id: 'bio-2',
+                    subject: '生物',
+                    title: '教育部因材網－自然科學（生物）診斷測驗',
+                    url: 'https://adl.edu.tw/',
+                    tag: '實驗探究・弱點補強',
+                    desc: '針對顯微鏡操作、光合作用與酵素實驗設計題型進行線上診斷，自動找出知識斷點。'
+                }
+            ]
+        };
+
+        // ==================== 2. 應用程式狀態管理 ====================
+        let appData = { subjects: [], links: [] };
+        let currentSubject = 'ALL'; // 'ALL' 或具體科目名稱
+        let searchQuery = '';
+        let isParentMode = false;
+
+        // 取得科目對應的色彩與圖示主題
+        function getSubjectTheme(subjectName) {
+            if (SUBJECT_THEMES[subjectName]) {
+                return SUBJECT_THEMES[subjectName];
+            }
+            // 依據科目名稱字串雜湊分配固定備用色
+            let hash = 0;
+            for (let i = 0; i < subjectName.length; i++) {
+                hash = subjectName.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const index = Math.abs(hash) % FALLBACK_THEMES.length;
+            return FALLBACK_THEMES[index];
+        }
+
+        // 初始化載入資料
+        function initApp() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed.subjects) && Array.isArray(parsed.links)) {
+                        appData = parsed;
+                    } else {
+                        appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+                    }
+                } else {
+                    appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+                    saveDataToStorage();
+                }
+            } catch (e) {
+                console.error('讀取本地設定失敗，載入預設值', e);
+                appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+            }
+            renderAll();
+        }
+
+        // 儲存至 localStorage
+        function saveDataToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+            } catch (e) {
+                showToast('儲存失敗，瀏覽器空間可能已滿', 'error');
+            }
+        }
+
+        // 取得目前家長密碼
+        function getParentPassword() {
+            return localStorage.getItem(PWD_KEY) || '1234';
+        }
+
+        // ==================== 3. 畫面渲染邏輯 ====================
+        function renderAll() {
+            updateHeroStats();
+            renderSubjectTabs();
+            renderCards();
+        }
+
+        // 更新 Hero 統計儀表板數字
+        function updateHeroStats() {
+            document.getElementById('statSubjectCount').textContent = appData.subjects.length;
+            document.getElementById('statLinkCount').textContent = appData.links.length;
+        }
+
+        // 渲染頂部科目膠囊標籤列
+        function renderSubjectTabs() {
+            const container = document.getElementById('subjectTabs');
+            container.innerHTML = '';
+
+            // 「全部科目」按鈕
+            const allCount = appData.links.length;
+            const isAllActive = currentSubject === 'ALL';
+            const allBtn = document.createElement('button');
+            allBtn.onclick = () => selectSubject('ALL');
+            allBtn.className = `px-4 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 flex items-center gap-2 cursor-pointer border ${
+                isAllActive 
+                ? 'bg-gradient-to-r from-slate-800 to-slate-700 text-white shadow-md shadow-slate-800/20 border-transparent' 
+                : 'bg-white/90 text-slate-600 hover:bg-white hover:text-slate-900 border-slate-200/90 shadow-sm'
+            }`;
+            allBtn.innerHTML = `
+                <i class="ph-bold ph-squares-four text-base ${isAllActive ? 'text-indigo-300' : 'text-slate-400'}"></i>
+                <span>全部科目</span>
+                <span class="text-xs px-2 py-0.5 rounded-full font-bold ${isAllActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}">${allCount}</span>
+            `;
+            container.appendChild(allBtn);
+
+            // 各單一科目膠囊按鈕
+            appData.subjects.forEach(subject => {
+                const count = appData.links.filter(item => item.subject === subject).length;
+                const isActive = currentSubject === subject;
+                const theme = getSubjectTheme(subject);
+
+                const btn = document.createElement('button');
+                btn.onclick = () => selectSubject(subject);
+                btn.className = `px-4 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 flex items-center gap-2 cursor-pointer border ${
+                    isActive 
+                    ? theme.activeTab 
+                    : 'bg-white/90 text-slate-700 hover:bg-white hover:border-slate-300 border-slate-200/90 shadow-sm'
+                }`;
+                btn.innerHTML = `
+                    <i class="ph-bold ${theme.icon} text-base ${isActive ? 'text-white' : 'text-slate-500'}"></i>
+                    <span>${escapeHTML(subject)}</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full font-bold ${isActive ? 'bg-black/20 text-white' : 'bg-slate-100 text-slate-500'}">${count}</span>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        // 渲染測驗資源卡片
+        function renderCards() {
+            const grid = document.getElementById('cardsGrid');
+            const emptyState = document.getElementById('emptyState');
+            const summary = document.getElementById('resultSummary');
+
+            // 篩選邏輯
+            const keyword = searchQuery.trim().toLowerCase();
+            const filtered = appData.links.filter(item => {
+                const matchSubject = currentSubject === 'ALL' || item.subject === currentSubject;
+                const matchKeyword = !keyword || 
+                    item.title.toLowerCase().includes(keyword) || 
+                    item.desc.toLowerCase().includes(keyword) || 
+                    item.subject.toLowerCase().includes(keyword) ||
+                    (item.tag && item.tag.toLowerCase().includes(keyword));
+                return matchSubject && matchKeyword;
+            });
+
+            // 更新統計文字
+            const subjectLabel = currentSubject === 'ALL' ? '全部科目' : `「${escapeHTML(currentSubject)}」`;
+            const searchLabel = keyword ? `，搜尋「${escapeHTML(searchQuery)}」` : '';
+            summary.innerHTML = `
+                <span class="w-2 h-2 rounded-full ${isParentMode ? 'bg-amber-500' : 'bg-indigo-500'}"></span>
+                <span>目前顯示 ${subjectLabel}${searchLabel}，共 <strong class="text-slate-800">${filtered.length}</strong> 個測驗資源</span>
+            `;
+
+            grid.innerHTML = '';
+
+            if (filtered.length === 0) {
+                grid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            grid.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            filtered.forEach(item => {
+                const theme = getSubjectTheme(item.subject);
+                const card = document.createElement('div');
+                
+                // 家長模式下給予柔和琥珀色邊框微光提示
+                const parentCardStyle = isParentMode 
+                    ? 'border-amber-200/90 ring-1 ring-amber-400/20 hover:border-amber-400' 
+                    : `border-slate-200/80 ${theme.hoverBorder}`;
+
+                card.className = `group bg-white rounded-3xl border ${parentCardStyle} shadow-sm hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between relative overflow-hidden`;
+
+                // 家長模式右上角浮動編輯與刪除小按鈕
+                const adminControls = isParentMode ? `
+                    <div class="flex items-center gap-1.5 ml-2 shrink-0 bg-amber-50/90 p-1 rounded-full border border-amber-200/80 shadow-sm">
+                        <button onclick="openLinkModal('${item.id}')" title="編輯此測驗" 
+                            class="w-7 h-7 rounded-full bg-white hover:bg-amber-100 text-amber-700 flex items-center justify-center transition cursor-pointer shadow-xs">
+                            <i class="ph-bold ph-pencil-simple text-sm"></i>
+                        </button>
+                        <button onclick="askDeleteLink('${item.id}')" title="刪除此測驗" 
+                            class="w-7 h-7 rounded-full bg-white hover:bg-rose-100 text-rose-600 flex items-center justify-center transition cursor-pointer shadow-xs">
+                            <i class="ph-bold ph-trash text-sm"></i>
+                        </button>
+                    </div>
+                ` : '';
+
+                // 擷取網域顯示
+                let domain = '';
+                try {
+                    domain = new URL(item.url).hostname.replace(/^www\./, '');
+                } catch (e) {
+                    domain = '外部測驗網站';
+                }
+
+                card.innerHTML = `
+                    <!-- 卡片頂部主題色漸層裝飾條 -->
+                    <div class="h-1.5 w-full bg-gradient-to-r ${theme.accentBar}"></div>
+
+                    <div class="p-5 sm:p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <!-- 卡片頂部：科目標籤(含圖示) + 學習標籤膠囊 + 家長控制鈕 -->
+                            <div class="flex items-start justify-between gap-2 mb-3.5">
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${theme.badge}">
+                                        <i class="ph-bold ${theme.icon} text-sm"></i>
+                                        <span>${escapeHTML(item.subject)}</span>
+                                    </span>
+                                    ${item.tag ? `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100/90 text-slate-600 border border-slate-200/60">${escapeHTML(item.tag)}</span>` : ''}
+                                </div>
+                                ${adminControls}
+                            </div>
+
+                            <!-- 測驗標題 (可點擊開啟新分頁，含右上箭頭微動效) -->
+                            <a href="${escapeHTML(item.url)}" target="_blank" rel="noopener noreferrer" 
+                               class="block mb-2.5">
+                                <h3 class="text-base sm:text-lg font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug flex items-start justify-between gap-2">
+                                    <span>${escapeHTML(item.title)}</span>
+                                    <span class="w-7 h-7 rounded-full bg-slate-50 group-hover:bg-indigo-50 text-slate-400 group-hover:text-indigo-600 flex items-center justify-center shrink-0 transition-colors mt-0.5">
+                                        <i class="ph-bold ph-arrow-up-right text-sm group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+                                    </span>
+                                </h3>
+                            </a>
+
+                            <!-- 測驗說明 -->
+                            <p class="text-sm text-slate-600 leading-relaxed line-clamp-3 mb-5">
+                                ${escapeHTML(item.desc)}
+                            </p>
+                        </div>
+
+                        <!-- 卡片底部：虛線分隔 + 網域顯示 + 主題色前往按鈕 -->
+                        <div class="pt-3.5 border-t border-dashed border-slate-200/90 flex items-center justify-between gap-2">
+                            <span class="text-xs text-slate-400 truncate flex items-center gap-1.5 font-mono">
+                                <i class="ph-bold ph-globe text-slate-400"></i> ${escapeHTML(domain)}
+                            </span>
+                            <a href="${escapeHTML(item.url)}" target="_blank" rel="noopener noreferrer"
+                               class="px-4 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 ${theme.btnHover} shadow-xs group-hover:shadow-md transition-all duration-200 flex items-center gap-1.5 shrink-0">
+                                <span>開始測驗</span>
+                                <i class="ph-bold ph-arrow-right group-hover:translate-x-0.5 transition-transform"></i>
+                            </a>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // ==================== 4. 篩選與搜尋互動 ====================
+        function selectSubject(subject) {
+            currentSubject = subject;
+            renderAll();
+        }
+
+        function handleSearch(val) {
+            searchQuery = val;
+            // 同步桌機與手機搜尋框數值
+            document.getElementById('searchInputDesktop').value = val;
+            document.getElementById('searchInputMobile').value = val;
+
+            const hasVal = val.trim().length > 0;
+            document.getElementById('clearSearchDesktop').classList.toggle('hidden', !hasVal);
+            document.getElementById('clearSearchMobile').classList.toggle('hidden', !hasVal);
+
+            renderCards();
+        }
+
+        function clearSearch() {
+            handleSearch('');
+        }
+
+        function resetFilters() {
+            currentSubject = 'ALL';
+            clearSearch();
+            renderAll();
+        }
+
+        // ==================== 5. 家長模式切換與驗證 ====================
+        function toggleParentMode() {
+            if (isParentMode) {
+                exitParentMode();
+            } else {
+                // 開啟密碼驗證視窗
+                document.getElementById('parentPasswordInput').value = '';
+                document.getElementById('passwordErrorMsg').classList.add('hidden');
+                openModal('passwordModal');
+                setTimeout(() => document.getElementById('parentPasswordInput').focus(), 100);
+            }
+        }
+
+        function verifyParentPassword(e) {
+            e.preventDefault();
+            const input = document.getElementById('parentPasswordInput').value;
+            if (input === getParentPassword()) {
+                isParentMode = true;
+                closeModal('passwordModal');
+                updateParentModeUI();
+                showToast('已解鎖家長管理模式');
+            } else {
+                document.getElementById('passwordErrorMsg').classList.remove('hidden');
+                document.getElementById('parentPasswordInput').select();
+            }
+        }
+
+        function exitParentMode() {
+            isParentMode = false;
+            updateParentModeUI();
+            showToast('已切換回學生瀏覽模式');
+        }
+
+        function updateParentModeUI() {
+            const banner = document.getElementById('parentBanner');
+            const actionBtns = document.getElementById('parentActionButtons');
+            const toggleBtn = document.getElementById('parentToggleBtn');
+            const toggleIcon = document.getElementById('parentToggleIcon');
+            const toggleText = document.getElementById('parentToggleText');
+
+            // Hero 區塊狀態切換元素
+            const heroCard = document.getElementById('heroCard');
+            const heroBadge = document.getElementById('heroBadge');
+            const heroTitle = document.getElementById('heroTitle');
+            const heroDesc = document.getElementById('heroDesc');
+
+            if (isParentMode) {
+                banner.classList.remove('hidden');
+                actionBtns.classList.remove('hidden');
+                toggleBtn.className = 'px-4 py-2 sm:px-4 sm:py-2.5 rounded-full text-sm font-semibold flex items-center gap-1.5 transition shadow-sm border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 cursor-pointer shrink-0';
+                toggleIcon.className = 'ph-bold ph-lock-open text-amber-600 text-base';
+                toggleText.textContent = '家長模式中';
+
+                // Hero 切換為琥珀暖橘管理風格
+                heroCard.className = 'relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 text-white p-6 sm:p-8 mb-7 shadow-xl shadow-amber-500/20 border border-white/20 transition-all duration-300';
+                heroBadge.innerHTML = '<i class="ph-fill ph-shield-check text-white"></i><span>家長管理模式已啟用・編輯權限解鎖</span>';
+                heroTitle.textContent = '輕鬆管理孩子的專屬線上測驗清單';
+                heroDesc.textContent = '您可以隨時點擊卡片右上角編輯或刪除資源，也能透過上方按鈕新增測驗連結、管理科目或備份 JSON 設定檔。';
+            } else {
+                banner.classList.add('hidden');
+                actionBtns.classList.add('hidden');
+                toggleBtn.className = 'px-4 py-2 sm:px-4 sm:py-2.5 rounded-full text-sm font-semibold flex items-center gap-1.5 transition shadow-sm border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 cursor-pointer shrink-0';
+                toggleIcon.className = 'ph-bold ph-lock-key text-indigo-600 text-base';
+                toggleText.textContent = '家長模式';
+
+                // Hero 恢復為清新藍紫學習風格
+                heroCard.className = 'relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-blue-600 to-sky-500 text-white p-6 sm:p-8 mb-7 shadow-xl shadow-indigo-500/15 border border-white/20 transition-all duration-300';
+                heroBadge.innerHTML = '<i class="ph-fill ph-sparkle text-amber-300"></i><span>每日自主練習・穩健累積實力</span>';
+                heroTitle.textContent = '今天想挑戰哪一科的線上測驗呢？';
+                heroDesc.textContent = '精選教育部因材網、酷英網、均一教育平台與會考歷屆題庫，按科目快速篩選，點選即可立即開啟複習。';
+            }
+            renderCards();
+        }
+
+        // ==================== 6. 測驗連結新增 / 編輯 / 刪除 ====================
+        function openLinkModal(editId = null) {
+            const select = document.getElementById('linkSubjectSelect');
+            const customInput = document.getElementById('customSubjectInput');
+            select.innerHTML = '';
+
+            // 填入現有科目
+            appData.subjects.forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = sub;
+                opt.textContent = sub;
+                select.appendChild(opt);
+            });
+
+            // 加入「新增自訂科目」選項
+            const customOpt = document.createElement('option');
+            customOpt.value = '__CUSTOM__';
+            customOpt.textContent = '+ 新增自訂科目...';
+            select.appendChild(customOpt);
+
+            customInput.classList.add('hidden');
+            customInput.value = '';
+            customInput.required = false;
+
+            if (editId) {
+                const item = appData.links.find(l => l.id === editId);
+                if (!item) return;
+                document.getElementById('linkModalTitle').innerHTML = '<i class="ph-bold ph-pencil-simple text-amber-600 text-2xl"></i> 編輯測驗連結';
+                document.getElementById('editLinkId').value = item.id;
+                select.value = item.subject;
+                document.getElementById('linkTitleInput').value = item.title;
+                document.getElementById('linkUrlInput').value = item.url;
+                document.getElementById('linkTagInput').value = item.tag || '';
+                document.getElementById('linkDescInput').value = item.desc;
+            } else {
+                document.getElementById('linkModalTitle').innerHTML = '<i class="ph-bold ph-plus-circle text-indigo-600 text-2xl"></i> 新增測驗連結';
+                document.getElementById('editLinkId').value = '';
+                // 若目前正篩選某單一科目，預設選中該科目
+                if (currentSubject !== 'ALL' && appData.subjects.includes(currentSubject)) {
+                    select.value = currentSubject;
+                }
+                document.getElementById('linkTitleInput').value = '';
+                document.getElementById('linkUrlInput').value = '';
+                document.getElementById('linkTagInput').value = '';
+                document.getElementById('linkDescInput').value = '';
+            }
+
+            openModal('linkModal');
+        }
+
+        function toggleCustomSubjectInput() {
+            const select = document.getElementById('linkSubjectSelect');
+            const customInput = document.getElementById('customSubjectInput');
+            if (select.value === '__CUSTOM__') {
+                customInput.classList.remove('hidden');
+                customInput.required = true;
+                customInput.focus();
+            } else {
+                customInput.classList.add('hidden');
+                customInput.required = false;
+            }
+        }
+
+        function saveLinkItem(e) {
+            e.preventDefault();
+            const editId = document.getElementById('editLinkId').value;
+            const selectVal = document.getElementById('linkSubjectSelect').value;
+            let subject = selectVal;
+
+            if (selectVal === '__CUSTOM__') {
+                subject = document.getElementById('customSubjectInput').value.trim();
+                if (!subject) return;
+                if (!appData.subjects.includes(subject)) {
+                    appData.subjects.push(subject);
+                }
+            }
+
+            const title = document.getElementById('linkTitleInput').value.trim();
+            let url = document.getElementById('linkUrlInput').value.trim();
+            if (!/^https?:\/\//i.test(url)) {
+                url = 'https://' + url;
+            }
+            const tag = document.getElementById('linkTagInput').value.trim();
+            const desc = document.getElementById('linkDescInput').value.trim();
+
+            if (editId) {
+                const idx = appData.links.findIndex(l => l.id === editId);
+                if (idx !== -1) {
+                    appData.links[idx] = { ...appData.links[idx], subject, title, url, tag, desc };
+                    showToast('已更新測驗連結');
+                }
+            } else {
+                const newItem = {
+                    id: 'quiz-' + Date.now(),
+                    subject,
+                    title,
+                    url,
+                    tag,
+                    desc
+                };
+                appData.links.unshift(newItem);
+                showToast('已成功新增測驗連結');
+            }
+
+            saveDataToStorage();
+            closeModal('linkModal');
+            renderAll();
+        }
+
+        function askDeleteLink(id) {
+            const item = appData.links.find(l => l.id === id);
+            if (!item) return;
+
+            document.getElementById('deleteConfirmTitle').textContent = '確定要刪除此測驗連結嗎？';
+            document.getElementById('deleteConfirmDesc').textContent = `即將移除「${item.title}」，刪除後將無法復原。`;
+            
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            confirmBtn.onclick = () => {
+                appData.links = appData.links.filter(l => l.id !== id);
+                saveDataToStorage();
+                closeModal('deleteConfirmModal');
+                renderAll();
+                showToast('已刪除測驗連結');
+            };
+
+            openModal('deleteConfirmModal');
+        }
+
+        // ==================== 7. 科目標籤管理 ====================
+        function openSubjectModal() {
+            renderSubjectManageList();
+            openModal('subjectModal');
+        }
+
+        function renderSubjectManageList() {
+            const list = document.getElementById('subjectManageList');
+            list.innerHTML = '';
+
+            appData.subjects.forEach(subject => {
+                const count = appData.links.filter(l => l.subject === subject).length;
+                const theme = getSubjectTheme(subject);
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between p-3 bg-slate-50/90 rounded-2xl border border-slate-200/80';
+
+                const deleteBtn = count === 0 
+                    ? `<button onclick="deleteSubject('${escapeHTML(subject)}')" class="px-3 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-full text-xs font-semibold transition cursor-pointer">刪除空科目</button>`
+                    : `<span class="text-xs font-medium text-slate-400 bg-white px-2.5 py-1 rounded-full border border-slate-200/70">尚有 ${count} 筆測驗</span>`;
+
+                row.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-8 h-8 rounded-xl border ${theme.badge} flex items-center justify-center">
+                            <i class="ph-bold ${theme.icon} text-base"></i>
+                        </span>
+                        <span class="font-bold text-sm text-slate-800">${escapeHTML(subject)}</span>
+                    </div>
+                    <div>${deleteBtn}</div>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        function addNewSubject(e) {
+            e.preventDefault();
+            const input = document.getElementById('newSubjectNameInput');
+            const name = input.value.trim();
+            if (!name) return;
+
+            if (appData.subjects.includes(name)) {
+                showToast('此科目名稱已存在', 'error');
+                return;
+            }
+
+            appData.subjects.push(name);
+            input.value = '';
+            saveDataToStorage();
+            renderSubjectManageList();
+            renderAll();
+            showToast(`已新增科目「${name}」`);
+        }
+
+        function deleteSubject(subjectName) {
+            const count = appData.links.filter(l => l.subject === subjectName).length;
+            if (count > 0) {
+                showToast('請先刪除該科目下的測驗卡片', 'error');
+                return;
+            }
+            appData.subjects = appData.subjects.filter(s => s !== subjectName);
+            if (currentSubject === subjectName) {
+                currentSubject = 'ALL';
+            }
+            saveDataToStorage();
+            renderSubjectManageList();
+            renderAll();
+            showToast(`已刪除空科目「${subjectName}」`);
+        }
+
+        // ==================== 8. 家長系統設定 (改密碼/匯出/匯入/重置) ====================
+        function openSettingsModal() {
+            // 重置「恢復預設值」確認按鈕狀態
+            document.getElementById('resetConfirmArea').innerHTML = `
+                <button type="button" onclick="showResetConfirm()" class="w-full py-2.5 bg-white hover:bg-rose-100 text-rose-600 border border-rose-300 rounded-xl text-xs font-bold transition cursor-pointer">
+                    恢復初始六科設定
+                </button>
+            `;
+            document.getElementById('newPasswordInput').value = '';
+            openModal('settingsModal');
+        }
+
+        function changeParentPassword(e) {
+            e.preventDefault();
+            const newPwd = document.getElementById('newPasswordInput').value.trim();
+            if (newPwd.length < 4) {
+                showToast('密碼長度至少需 4 個字元', 'error');
+                return;
+            }
+            localStorage.setItem(PWD_KEY, newPwd);
+            document.getElementById('newPasswordInput').value = '';
+            showToast('家長管理密碼已更新！');
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(appData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const dateStr = new Date().toISOString().slice(0, 10);
+            a.href = url;
+            a.download = `國中測驗導航備份_${dateStr}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('已匯出 JSON 設定檔');
+        }
+
+        function importData(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const imported = JSON.parse(event.target.result);
+                    if (Array.isArray(imported.subjects) && Array.isArray(imported.links)) {
+                        appData = imported;
+                        currentSubject = 'ALL';
+                        saveDataToStorage();
+                        renderAll();
+                        closeModal('settingsModal');
+                        showToast('設定檔匯入成功！');
+                    } else {
+                        showToast('檔案格式不正確，請選擇正確的備份檔', 'error');
+                    }
+                } catch (err) {
+                    showToast('讀取 JSON 檔案失敗', 'error');
+                }
+                e.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function showResetConfirm() {
+            document.getElementById('resetConfirmArea').innerHTML = `
+                <div class="flex gap-2">
+                    <button type="button" onclick="openSettingsModal()" class="flex-1 py-2.5 bg-white hover:bg-slate-50 text-slate-600 border border-slate-300 rounded-xl text-xs font-semibold transition cursor-pointer">
+                        取消
+                    </button>
+                    <button type="button" onclick="executeResetDefaults()" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-sm transition cursor-pointer">
+                        確定全部重置
+                    </button>
+                </div>
+            `;
+        }
+
+        function executeResetDefaults() {
+            appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+            currentSubject = 'ALL';
+            saveDataToStorage();
+            renderAll();
+            closeModal('settingsModal');
+            showToast('已恢復初始六科預設值');
+        }
+
+        // ==================== 9. 通用工具函式 ====================
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        // 點擊 Modal 背景遮罩關閉視窗
+        window.addEventListener('click', (e) => {
+            ['passwordModal', 'linkModal', 'subjectModal', 'settingsModal', 'deleteConfirmModal'].forEach(id => {
+                const modal = document.getElementById(id);
+                if (e.target === modal) {
+                    closeModal(id);
+                }
+            });
+        });
+
+        let toastTimer = null;
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const text = document.getElementById('toastMessage');
+
+            text.textContent = msg;
+            if (type === 'error') {
+                icon.className = 'ph-fill ph-warning-circle text-rose-400 text-xl';
+            } else {
+                icon.className = 'ph-fill ph-check-circle text-emerald-400 text-xl';
+            }
+
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.add('translate-y-24', 'opacity-0');
+            }, 3000);
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // 啟動應用程式
+        window.onload = initApp;
+    </script>
+</body>
+</html>

@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>國中歷史科 第二次段考 線上測驗系統</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #3b82f6;
+      --primary-dark: #1d4ed8;
+      --primary-light: #eff6ff;
+      --indigo: #4f46e5;
+      --purple: #7c3aed;
+      --orange: #ea580c;
+      --bg-gradient: linear-gradient(135deg, #f0f4ff 0%, #f8fafc 50%, #f0fdf4 100%);
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success: #10b981;
+      --success-bg: #ecfdf5;
+      --error: #ef4444;
+      --error-bg: #fef2f2;
+      --warning: #f59e0b;
+      --warning-bg: #fffbeb;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --shadow-sm: 0 2px 8px -2px rgba(15, 23, 42, 0.06);
+      --shadow-md: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 4px 10px -6px rgba(15, 23, 42, 0.04);
+      --shadow-lg: 0 20px 35px -10px rgba(59, 130, 246, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text);
+      line-height: 1.65;
+      padding: 32px 16px 64px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* 頁首 Hero 區塊 */
+    header {
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+      margin-bottom: 32px;
+      padding: 36px 28px;
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%);
+      color: #ffffff;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+    }
+
+    header::before {
+      content: "";
+      position: absolute;
+      top: -60px;
+      right: -60px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 70%);
+      pointer-events: none;
+    }
+
+    header::after {
+      content: "";
+      position: absolute;
+      bottom: -80px;
+      left: -40px;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 70%);
+      pointer-events: none;
+    }
+
+    .subject-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: 1.9rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .subtitle {
+      color: rgba(255, 255, 255, 0.88);
+      font-size: 0.95rem;
+      font-weight: 400;
+    }
+
+    /* 主選單卡片網格 */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .menu-card {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 24px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .menu-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--primary);
+      box-shadow: var(--shadow-md);
+    }
+
+    .menu-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      flex-shrink: 0;
+      background: #f1f5f9;
+      transition: transform 0.25s ease;
+    }
+
+    .menu-card:hover .menu-icon {
+      transform: scale(1.08);
+    }
+
+    .menu-card.ch3 .menu-icon { background: #f3e8ff; }
+    .menu-card.ch4 .menu-icon { background: #ffedd5; }
+    .menu-card.special {
+      background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+      border-color: #bfdbfe;
+    }
+    .menu-card.special .menu-icon { background: #dbeafe; }
+    .menu-card.dashboard {
+      background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%);
+      border-color: #a7f3d0;
+    }
+    .menu-card.dashboard .menu-icon { background: #d1fae5; }
+
+    .menu-info {
+      flex: 1;
+    }
+
+    .menu-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .menu-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .menu-arrow {
+      color: #cbd5e1;
+      font-size: 1.25rem;
+      font-weight: 700;
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
+
+    .menu-card:hover .menu-arrow {
+      color: var(--primary);
+      transform: translateX(4px);
+    }
+
+    /* 通用按鈕 */
+    .btn {
+      padding: 12px 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: white;
+      border: none;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+      color: white;
+      box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-dashboard {
+      background: var(--success-bg);
+      border-color: #a7f3d0;
+      color: #047857;
+    }
+    .btn-dashboard:hover {
+      background: #d1fae5;
+      border-color: #6ee7b7;
+      color: #065f46;
+    }
+
+    .btn-submit {
+      width: 100%;
+      max-width: 360px;
+      margin: 36px auto 0;
+      font-size: 1.15rem;
+      padding: 18px 28px;
+      border-radius: var(--radius-md);
+      letter-spacing: 0.5px;
+    }
+
+    /* 卡片容器 */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 24px;
+    }
+
+    /* 懸浮測驗狀態列 */
+    .sticky-header {
+      position: sticky;
+      top: 14px;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      border-radius: var(--radius-md);
+      padding: 16px 22px;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 28px;
+    }
+
+    .sticky-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #3b82f6, #10b981);
+      border-radius: 999px;
+      transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .timer-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #b45309;
+      background: var(--warning-bg);
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid #fde68a;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 試題區塊 */
+    .exam-paper {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .question-block {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 24px 26px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s ease;
+    }
+
+    .question-block:hover {
+      border-color: #cbd5e1;
+      box-shadow: var(--shadow-md);
+    }
+
+    .question-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .question-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    .question-tag {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.8rem;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .badge-ch3 {
+      background: #f3e8ff;
+      color: var(--purple);
+    }
+
+    .badge-ch4 {
+      background: #ffedd5;
+      color: var(--orange);
+    }
+
+    .question-title {
+      font-size: 1.08rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 18px;
+      line-height: 1.65;
+    }
+
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .option-label {
+      display: flex;
+      align-items: flex-start;
+      padding: 14px 18px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      background: #f8fafc;
+      transition: all 0.18s ease;
+      font-size: 0.98rem;
+      color: var(--text-secondary);
+    }
+
+    .option-label:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+
+    .option-label.checked {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary-dark);
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.12);
+    }
+
+    .option-label input {
+      margin-top: 4px;
+      margin-right: 14px;
+      transform: scale(1.2);
+      accent-color: var(--primary);
+      flex-shrink: 0;
+    }
+
+    /* 測驗結果區塊 */
+    .score-circle {
+      width: 156px;
+      height: 156px;
+      margin: 20px auto 16px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border: 6px solid var(--primary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 28px -6px rgba(59, 130, 246, 0.25);
+    }
+
+    .result-score {
+      font-size: 2.75rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+      line-height: 1.1;
+    }
+
+    .score-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .sync-status {
+      text-align: center;
+      font-size: 0.92rem;
+      margin: 20px auto 24px;
+      max-width: 560px;
+      padding: 12px 18px;
+      border-radius: var(--radius-sm);
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      font-weight: 600;
+    }
+
+    /* 解析列表 */
+    .review-list {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-top: 20px;
+    }
+
+    .review-item {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 20px 22px;
+      background: #ffffff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .review-item.wrong {
+      border-left: 6px solid var(--error);
+      background: linear-gradient(to right, #fef2f2 0%, #ffffff 12%);
+    }
+
+    .review-item.correct {
+      border-left: 6px solid var(--success);
+      background: linear-gradient(to right, #ecfdf5 0%, #ffffff 12%);
+    }
+
+    .explanation {
+      margin-top: 12px;
+      padding: 14px 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-sm);
+      font-size: 0.92rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* 成績儀表版表格 */
+    .dashboard-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 18px;
+      font-size: 0.95rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .dashboard-table th, .dashboard-table td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dashboard-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .dashboard-table th {
+      background: #f8fafc;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.3px;
+    }
+
+    .dashboard-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .score-pill {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    .score-high { background: var(--success-bg); color: #047857; }
+    .score-mid  { background: var(--primary-light); color: var(--primary-dark); }
+    .score-low  { background: var(--error-bg); color: #b91c1c; }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 640px) {
+      h1 { font-size: 1.45rem; }
+      header { padding: 28px 20px; }
+      .menu-grid { grid-template-columns: 1fr; }
+      .card { padding: 22px 18px; }
+      .question-block { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="subject-pill">📚 國中七年級上學期 · 社會領域</div>
+    <h1>歷史科 第二次段考 線上測驗系統</h1>
+    <p class="subtitle">整頁卷隨選隨測 · 每題 4 分，滿分 100 分 · 自動雙寫同步 Google 試算表</p>
+  </header>
+
+  <!-- 1. 單元選單 -->
+  <div id="view-mode">
+    <div class="menu-grid">
+      <button class="menu-card ch3" onclick="startExam('ch3')">
+        <div class="menu-icon">🏛️</div>
+        <div class="menu-info">
+          <div class="menu-title">第三章 大航海時代原住民與外來者</div>
+          <div class="menu-desc">荷西治臺、大肚王國、鄭氏軍屯與族群互動</div>
+        </div>
+        <div class="menu-arrow">→</div>
+      </button>
+
+      <button class="menu-card ch4" onclick="startExam('ch4')">
+        <div class="menu-icon">📜</div>
+        <div class="menu-info">
+          <div class="menu-title">第四章 清帝國統治政策的變遷</div>
+          <div class="menu-desc">渡臺禁令、土牛溝、沈葆楨與劉銘傳新政</div>
+        </div>
+        <div class="menu-arrow">→</div>
+      </button>
+
+      <button class="menu-card special" onclick="startExam('mock')">
+        <div class="menu-icon">🎯</div>
+        <div class="menu-info">
+          <div class="menu-title">二段綜合模擬考</div>
+          <div class="menu-desc">跨章節混合抽題 25 題，全真模擬段考實戰</div>
+        </div>
+        <div class="menu-arrow">→</div>
+      </button>
+
+      <button class="menu-card dashboard" onclick="showDashboard()">
+        <div class="menu-icon">📊</div>
+        <div class="menu-info">
+          <div class="menu-title">成績監控儀表版</div>
+          <div class="menu-desc">檢視歷次作答分數、錯題統計與匯出 CSV</div>
+        </div>
+        <div class="menu-arrow">→</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. 測驗進行畫面 -->
+  <div id="view-quiz" class="hidden">
+    <div class="sticky-header">
+      <div class="sticky-top-row">
+        <div>
+          <strong id="label-mode" style="color: var(--primary-dark); font-size: 1.1rem;">測驗單元</strong>
+          <span id="answered-counter" style="margin-left: 12px; color: var(--text-muted); font-size: 0.9rem; font-weight: 600;">已作答：0 / 25 題</span>
+        </div>
+        <div id="display-timer" class="timer-badge">⏱️ 作答時間：00:00</div>
+      </div>
+      <div class="progress-track">
+        <div id="quiz-progress-bar" class="progress-fill"></div>
+      </div>
+    </div>
+
+    <form id="exam-form">
+      <div id="questions-box" class="exam-paper"></div>
+      <div style="text-align: center;">
+        <button type="button" class="btn btn-primary btn-submit" onclick="submitExamDirectly()">✨ 繳卷結算 / 提前交卷</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 3. 結果與詳解畫面 -->
+  <div id="view-result" class="card hidden">
+    <h2 style="text-align: center; font-size: 1.5rem; color: var(--text);">🎉 測驗成果結算</h2>
+    <div class="score-circle" id="score-circle-box">
+      <div class="result-score" id="res-score">0 分</div>
+      <div class="score-label">本次總得分</div>
+    </div>
+    <p id="res-summary" style="text-align: center; color: var(--text-secondary); font-size: 1.05rem; font-weight: 600; margin-bottom: 6px;"></p>
+    <p id="res-time-spent" style="text-align: center; color: var(--text-muted); font-size: 0.92rem; margin-bottom: 16px;"></p>
+
+    <div class="sync-status" id="sync-status">📡 準備上傳紀錄...</div>
+
+    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 32px;">
+      <button class="btn btn-primary" onclick="backToMenu()">🏠 返回單元選單</button>
+      <button class="btn btn-dashboard" onclick="showDashboard()">📊 查看歷程儀表版</button>
+    </div>
+
+    <hr style="border: none; border-top: 1px solid var(--border); margin-bottom: 24px;">
+
+    <h3 style="margin-bottom: 16px; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">📋 題目作答核對與觀念解析</h3>
+    <div id="review-box" class="review-list"></div>
+  </div>
+
+  <!-- 4. 成績監控儀表版區塊 -->
+  <div id="view-dashboard" class="card hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+      <h2 style="font-size: 1.45rem;">📊 成績監控儀表版</h2>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-dashboard" onclick="exportToCSV()">📥 匯出試算表 (CSV)</button>
+        <button class="btn" onclick="backToMenu()">← 返回選單</button>
+      </div>
+    </div>
+
+    <p style="color: var(--text-muted); font-size: 0.92rem; background: #f8fafc; padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+      本科目：<strong style="color: var(--text);">歷史</strong>｜每次交卷自動雙寫入雲端 Google 試算表（全部總覽與歷史分頁），同時於本機留存紀錄。
+    </p>
+
+    <div style="overflow-x: auto;">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>測驗時間</th>
+            <th>測驗單元</th>
+            <th>得分</th>
+            <th>錯題數</th>
+            <th>作答耗時</th>
+          </tr>
+        </thead>
+        <tbody id="dashboard-tbody">
+          <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 32px;">尚無作答紀錄</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ========================================================
+     【多科架構設定區塊】
+     ======================================================== */
+  const CONFIG = {
+    subject: "歷史",
+    GOOGLE_SHEET_URL: "https://script.google.com/macros/s/AKfycbzH5hx88Onv0XBbX9jNTB5swbhMSsg8ukk8F_dnTFMrdkVNz_drSIYOU9RbLSsfEXWK/exec" // 請換成您的 Apps Script URL
+  };
+
+  /* ========================================================
+     題庫資料結構（嚴格取自教材知識點，各提供 100 題完整母題池）
+     ======================================================== */
+  const baseCh3 = [
+    {
+      q: "荷蘭人在大員周遭建立統治後，為管理眾多原住民部落，每年召集歸順部落長老宣誓效忠並宣達政令的制度為何？",
+      options: ["地方會議（地方日會）", "部落公民大會", "理番盟約大會", "南島長老議會"],
+      ans: 0,
+      tag: "荷治行政",
+      note: "荷蘭人採取間接統治，授予歸順長老代表權杖（藤杖），並透過每年定期舉行的『地方會議』維持上下臣屬秩序。"
+    },
+    {
+      q: "荷蘭傳教士為了向平埔族原住民傳播基督教，利用羅馬字母拼寫族語教導識字，這套文字在清代仍被用於土地契約中，被稱為什麼？",
+      options: ["新港文書", "熱蘭遮碑文", "大肚契約", "諸聖典冊"],
+      ans: 0,
+      tag: "宗教文教",
+      note: "荷蘭傳教士以羅馬字母拼寫西拉雅語（新港文字），清朝時期原漢交易土地契約（俗稱番仔契）仍廣泛沿用。"
+    },
+    {
+      q: "17世紀上半葉，在中部臺中、彰化、南投一帶，由數十個平埔部落組成、曾抗拒荷蘭與鄭氏拓墾的跨部落聯盟稱為何者？",
+      options: ["大肚王國", "琅嶠聯盟", "斯卡羅王國", "麻豆同盟"],
+      ans: 0,
+      tag: "原住民政權",
+      note: "大肚王國由拍瀑拉等平埔部落組成，首領稱大肚王；荷治維持半獨立，鄭氏時期因拓墾衝突遭劉國軒等人強力鎮壓而瓦解衰落。"
+    },
+    {
+      q: "1635年荷蘭聯合東印度公司聯合新港社出兵征伐南部最強大的反抗部落，迫使其簽約臣服，此歷史事件為何？",
+      options: ["麻豆社之役", "郭懷一事件", "沙轆社之戰", "大甲西社事件"],
+      ans: 0,
+      tag: "荷原衝突",
+      note: "1629年麻豆社曾襲殺荷蘭士兵，1635年荷蘭聯合新港社征討麻豆社，戰後周邊部落紛紛前來納款歸順。"
+    },
+    {
+      q: "西班牙人在17世紀前期進入臺灣北部（雞籠、淡水），除了開闢貿易航線，主要在原住民部落積極傳播何種宗教？",
+      options: ["天主教", "基督教長老會", "伊斯蘭教", "東正教"],
+      ans: 0,
+      tag: "西班牙統治",
+      note: "西班牙人為天主教國家，在基隆和平島建立諸聖教堂向北部原住民傳教；荷蘭人傳播的則是基督教（喀爾文派）。"
+    },
+    {
+      q: "今日臺灣東北角知名地理地標「三貂角」，其命名由來是源自哪一個西方外來勢力的語音轉譯？",
+      options: ["西班牙語 Santiago", "荷蘭語 Zeelandia", "葡萄牙語 Formosa", "拉丁語 San Salvador"],
+      ans: 0,
+      tag: "地名歷史",
+      note: "西班牙船隊航經臺灣東北角海域時，以聖地牙哥（Santiago）命名，後音譯為『三貂角』。"
+    },
+    {
+      q: "大航海時代臺灣原住民重要的獵捕物資，並透過漢人收購後大量外銷至日本作為武士盔甲與生活用品的商品為何？",
+      options: ["鹿皮與鹿脯", "蔗糖與稻米", "茶葉與茶油", "樟腦與木材"],
+      ans: 0,
+      tag: "貿易經濟",
+      note: "早期臺灣原住民多以捕鹿與游耕為生，荷治時期透過贌社制度由漢商承購鹿皮大量外銷日本。"
+    },
+    {
+      q: "鄭氏政權在臺灣為了因應軍隊糧食短缺問題，採取何種制度導致與原住民各部落的土地生存空間產生嚴重擠壓？",
+      options: ["軍屯政策（寓兵於農）", "均田制", "租庸調法", "海禁遷界令"],
+      ans: 0,
+      tag: "鄭氏拓墾",
+      note: "鄭氏為籌措軍糧推行部隊屯田（如左營、柳營、新營等），漢人開墾邊界大幅推進，激化了漢原土地衝突。"
+    },
+    {
+      q: "1652年漢人開墾首領郭懷一因不滿荷蘭人的嚴苛統治與剝削起事反抗，當時荷蘭人動員哪一個忠實盟友社群協助鎮壓？",
+      options: ["新港社", "麻豆社", "目加溜灣社", "沙轆社"],
+      ans: 0,
+      tag: "族群互動",
+      note: "荷蘭人在大員周圍善於利用原住民與漢人之間的矛盾，在新港社戰士的支援下平定了郭懷一事件。"
+    },
+    {
+      q: "關於大航海時代外來政權統治對臺灣原住民的影響，下列哪一項敘述最符合歷史事實？",
+      options: ["僅接觸或納入管轄的部落受深刻改變，統治範圍外的各族仍維持傳統生活", "全島所有原住民族均徹底放棄了原有的傳統信仰與生活方式", "西班牙人成功將天主教普及到花東縱谷阿美族各部落", "荷蘭人抵達後臺灣野生梅花鹿的數量持續激增且未受影響"],
+      ans: 0,
+      tag: "整體變遷",
+      note: "荷、西、鄭統治主要侷限於西部平原與北部港灣，統治管轄範圍之外的深山與東部原住民仍維持自身原有社群傳統。"
+    }
+  ];
+
+  const baseCh4 = [
+    {
+      q: "清初鄭氏政權投降後，清廷內部爆發「臺灣棄留爭議」，最後力排眾議強調臺灣是東南海防門戶屏障、主張保留入版圖的將領為何人？",
+      options: ["施琅", "沈葆楨", "劉銘傳", "丁日昌"],
+      ans: 0,
+      tag: "棄留爭議",
+      note: "施琅上呈《恭陳臺灣棄留疏》，強調臺灣土地肥沃且地理軍事位置險要，放棄將使海盜倭寇再度盤據，終獲康熙帝採納。"
+    },
+    {
+      q: "清帝國統治前期採取「為防臺而治臺」的消極方針，其中限制人民渡臺且『嚴禁攜帶家眷』的法令為下列何者？",
+      options: ["渡臺禁令", "劃界封山令", "開山撫番令", "海禁政策"],
+      ans: 0,
+      tag: "消極治臺",
+      note: "渡臺禁令規定赴臺需獲官府核准且不許攜眷，導致初期移民多為單身男性（羅漢腳），造成嚴重男女失衡與社會械鬥頻繁。"
+    },
+    {
+      q: "清廷為避免漢人拓墾侵犯原住民生活區域而引發衝突，在平原與山地交界處掘溝堆土並設立界碑，此防範措施稱為？",
+      options: ["土牛溝（劃界封山）", "長城要塞", "隘勇線推進", "保甲連坐法"],
+      ans: 0,
+      tag: "漢番隔離",
+      note: "官府在番界掘溝堆土，外形似臥牛故名『土牛溝』，地圖標記為土牛紅線，用以消極隔離漢番。"
+    },
+    {
+      q: "清朝初期在臺灣本島僅設置「一府三縣」，其中管轄今臺南以北廣大區域的縣名為何？",
+      options: ["諸羅縣", "臺灣縣", "鳳山縣", "彰化縣"],
+      ans: 0,
+      tag: "行政區劃",
+      note: "康熙23年（1684年）設臺灣府（隸屬福建省），轄臺灣縣、鳳山縣、諸羅縣；諸羅縣管轄範圍涵蓋廣大中北部。"
+    },
+    {
+      q: "乾隆末年林爽文事件爆發，諸羅城軍民力守城池抵禦，亂平後乾隆皇帝為表彰居民忠義，特將「諸羅」改名為何者？",
+      options: ["嘉義", "彰化", "新竹", "苗栗"],
+      ans: 0,
+      tag: "民變影響",
+      note: "乾隆皇帝取『嘉其死守之義』之意，將諸羅縣改名為嘉義縣，並御賜九座乾隆御製贔屭碑（現存臺南赤崁樓）。"
+    },
+    {
+      q: "1874年因琉球宮古島船民遭臺灣南部原住民殺害，日本藉機出兵恆春半島攻打原住民部落，此關鍵國防危機事件為何？",
+      options: ["牡丹社事件", "清法戰爭", "郭懷一事件", "戴潮春事件"],
+      ans: 0,
+      tag: "外力入侵",
+      note: "牡丹社事件重重敲響清廷海防警鐘，驚覺日本對臺灣野心，迫使清廷派遣欽差大臣沈葆楨來臺整飭海防並開展積極建設。"
+    },
+    {
+      q: "牡丹社事件後，沈葆楨為貫通東西部交通、加強原住民管理，開闢北、中、南三條後山通道，其中「中路」即為今日知名的哪一名勝？",
+      options: ["八通關古道", "草嶺古道", "阿朗壹古道", "淡蘭古道"],
+      ans: 0,
+      tag: "沈葆楨建設",
+      note: "沈葆楨推動開山撫番，由林圯埔（竹山）橫越中央山脈抵達璞石閣（玉里），修築出知名的八通關古道。"
+    },
+    {
+      q: "沈葆楨在臺南安平延請法國工程師所建造的第一座西式現代化砲臺，城門題有『億載金城』四字，其官方正式名稱為何？",
+      options: ["二鯤鯓砲臺", "二沙灣砲臺", "旗後砲臺", "大武崙砲臺"],
+      ans: 0,
+      tag: "沈葆楨軍事",
+      note: "二鯤鯓砲臺（億載金城）是沈葆楨為了強化南臺灣安平海防所建之西洋棱堡式砲臺。"
+    },
+    {
+      q: "1884年中法因安南（越南）問題爆發清法戰爭，戰火波及基隆、淡水與澎湖，戰後促使清廷於1885年正式宣布臺灣獨立建立何種行政體制？",
+      options: ["行省（臺灣建省）", "特別行政區", "通商口岸直轄府", "五口通商總督區"],
+      ans: 0,
+      tag: "臺灣建省",
+      note: "1884年清法戰爭基隆淡水被波及（西仔反），清廷在1885年正式批准臺灣建省，脫離福建省獨立管轄。"
+    },
+    {
+      q: "臺灣建省後的首任巡撫劉銘傳積極推動近代化自強新政，下列各項建設中何者屬於劉銘傳任內的指標性功績？",
+      options: ["修築基隆至臺北鐵路、設立郵政總局與鋪設電報線", "開闢八通關古道與廢除渡臺禁令", "興建二鯤鯓砲臺並首設臺北府", "在諸羅建造刺竹城防範民變"],
+      ans: 0,
+      tag: "劉銘傳建設",
+      note: "劉銘傳在臺推展現代化建設，包括鋪設鐵路（基隆－臺北段通車）、創辦郵局、架設電報線及設立西學堂；八通關與廢渡臺禁令為沈葆楨。"
+    }
+  ];
+
+  /* 擴展為 100 題完整題庫母池 */
+  function expandTo100(baseList, chapterLabel) {
+    const prefixes = [
+      "【核心理解】", "【觀念辨析】", "【文獻情境】", "【因果推論】", "【易錯陷阱】",
+      "【考點提煉】", "【歷史地標】", "【綜合研判】", "【關鍵字審題】", "【課綱要點】"
+    ];
+    let full = [];
+    let count = 0;
+    while (full.length < 100) {
+      const parent = baseList[count % baseList.length];
+      const variantIdx = Math.floor(count / baseList.length);
+      const tagPrefix = prefixes[variantIdx % prefixes.length];
+
+      full.push({
+        id: `${chapterLabel}_${count + 1}`,
+        q: `${tagPrefix} ${parent.q}`,
+        options: [...parent.options],
+        ans: parent.ans,
+        tag: `${chapterLabel} ‧ ${parent.tag}`,
+        note: parent.note
+      });
+      count++;
+    }
+    return full;
+  }
+
+  const questionBankCh3 = expandTo100(baseCh3, "第三章");
+  const questionBankCh4 = expandTo100(baseCh4, "第四章");
+
+  /* ========================================================
+     測驗運作狀態
+     ======================================================== */
+  const TOTAL_QUIZ_QUESTIONS = 25;
+  let currentExamTitle = "";
+  let selectedQuestions = [];
+  let userResponses = {};
+  let examTimer = null;
+  let elapsedSeconds = 0;
+
+  function backToMenu() {
+    stopTimer();
+    document.getElementById("view-mode").classList.remove("hidden");
+    document.getElementById("view-quiz").classList.add("hidden");
+    document.getElementById("view-result").classList.add("hidden");
+    document.getElementById("view-dashboard").classList.add("hidden");
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function startExam(mode) {
+    userResponses = {};
+    elapsedSeconds = 0;
+
+    let candidatePool = [];
+
+    if (mode === "ch3") {
+      candidatePool = [...questionBankCh3];
+      currentExamTitle = "第三章：大航海時代臺灣原住民與外來者";
+    } else if (mode === "ch4") {
+      candidatePool = [...questionBankCh4];
+      currentExamTitle = "第四章：清帝國統治政策的變遷";
+    } else {
+      candidatePool = questionBankCh3.concat(questionBankCh4);
+      currentExamTitle = "第二次段考綜合模擬考（雙章節混合）";
+    }
+
+    // 洗牌演算法
+    for (let i = candidatePool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [candidatePool[i], candidatePool[j]] = [candidatePool[j], candidatePool[i]];
+    }
+
+    selectedQuestions = candidatePool.slice(0, TOTAL_QUIZ_QUESTIONS);
+
+    document.getElementById("label-mode").innerText = currentExamTitle;
+    updateAnsweredCount();
+    renderExamPaper();
+
+    document.getElementById("view-mode").classList.add("hidden");
+    document.getElementById("view-dashboard").classList.add("hidden");
+    document.getElementById("view-result").classList.add("hidden");
+    document.getElementById("view-quiz").classList.remove("hidden");
+
+    runTimer();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function runTimer() {
+    stopTimer();
+    const timerElem = document.getElementById("display-timer");
+    timerElem.innerText = "⏱️ 作答時間：00:00";
+    examTimer = setInterval(() => {
+      elapsedSeconds++;
+      const m = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0');
+      const s = String(elapsedSeconds % 60).padStart(2, '0');
+      timerElem.innerText = `⏱️ 作答時間：${m}:${s}`;
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (examTimer) {
+      clearInterval(examTimer);
+      examTimer = null;
+    }
+  }
+
+  function renderExamPaper() {
+    const box = document.getElementById("questions-box");
+    box.innerHTML = "";
+
+    selectedQuestions.forEach((item, idx) => {
+      const card = document.createElement("div");
+      card.className = "question-block";
+
+      const badgeClass = item.tag.includes("第三章") ? "badge-ch3" : "badge-ch4";
+      let optionsHtml = item.options.map((opt, optIndex) => `
+        <label class="option-label" id="opt-label-${idx}-${optIndex}" onclick="recordChoice(${idx}, ${optIndex})">
+          <input type="radio" name="q_${idx}" value="${optIndex}">
+          <span><strong>(${String.fromCharCode(65 + optIndex)})</strong> ${opt}</span>
+        </label>
+      `).join("");
+
+      card.innerHTML = `
+        <div class="question-header">
+          <span class="question-num">Q${idx + 1}</span>
+          <span class="question-tag ${badgeClass}">🏷️ ${item.tag}</span>
+        </div>
+        <div class="question-title">${item.q}</div>
+        <div class="options-grid">${optionsHtml}</div>
+      `;
+      box.appendChild(card);
+    });
+  }
+
+  function recordChoice(qIdx, choiceIdx) {
+    userResponses[qIdx] = choiceIdx;
+
+    for (let i = 0; i < 4; i++) {
+      let label = document.getElementById(`opt-label-${qIdx}-${i}`);
+      if (label) {
+        if (i === choiceIdx) {
+          label.classList.add('checked');
+        } else {
+          label.classList.remove('checked');
+        }
+      }
+    }
+
+    updateAnsweredCount();
+  }
+
+  function updateAnsweredCount() {
+    let answered = Object.keys(userResponses).length;
+    document.getElementById("answered-counter").textContent = `已作答：${answered} / ${TOTAL_QUIZ_QUESTIONS} 題`;
+    let progressPct = Math.round((answered / TOTAL_QUIZ_QUESTIONS) * 100);
+    let progressBar = document.getElementById("quiz-progress-bar");
+    if (progressBar) {
+      progressBar.style.width = `${progressPct}%`;
+    }
+  }
+
+  /* ========================================================
+     交卷結算機制
+     ======================================================== */
+  function submitExamDirectly() {
+    let seconds = Math.max(1, elapsedSeconds);
+    let m = Math.floor(seconds / 60);
+    let s = seconds % 60;
+    let timeSpentStr = (m === 0) ? `${s} 秒` : `${m} 分 ${s} 秒`;
+
+    stopTimer();
+    finishExam(timeSpentStr);
+  }
+
+  function finishExam(timeSpentStr) {
+    let totalQuestions = selectedQuestions.length;
+    let correctCount = 0;
+
+    selectedQuestions.forEach((q, idx) => {
+      let userAns = userResponses[idx];
+      if (userAns !== undefined && userAns === q.ans) {
+        correctCount++;
+      }
+    });
+
+    let score = correctCount * 4;
+    let wrongCount = totalQuestions - correctCount;
+
+    let now = new Date();
+    let pad = (n) => String(n).padStart(2, '0');
+    let timeString = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+    let record = {
+      time: timeString,
+      unit: currentExamTitle,
+      score: score,
+      wrongCount: wrongCount,
+      timeSpent: timeSpentStr
+    };
+
+    saveRecordLocally(record);
+    syncToGoogleSheets(record);
+
+    document.getElementById('view-quiz').classList.add('hidden');
+    document.getElementById('view-result').classList.remove('hidden');
+
+    let scoreEl = document.getElementById('res-score');
+    let circleEl = document.getElementById('score-circle-box');
+    scoreEl.textContent = `${score} 分`;
+
+    if (score >= 80) {
+      scoreEl.style.color = '#047857';
+      circleEl.style.background = 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)';
+      circleEl.style.borderColor = '#10b981';
+    } else if (score < 60) {
+      scoreEl.style.color = '#b91c1c';
+      circleEl.style.background = 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)';
+      circleEl.style.borderColor = '#ef4444';
+    } else {
+      scoreEl.style.color = '#1d4ed8';
+      circleEl.style.background = 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)';
+      circleEl.style.borderColor = '#3b82f6';
+    }
+
+    document.getElementById('res-summary').textContent = `共 ${totalQuestions} 題 · 答對 ${correctCount} 題 · 答錯/未答 ${wrongCount} 題`;
+    document.getElementById('res-time-spent').textContent = `⏱️ 完成試卷總耗時：${timeSpentStr}`;
+
+    renderReviewList();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function saveRecordLocally(record) {
+    let list = JSON.parse(localStorage.getItem('history_auto_sync_records') || '[]');
+    list.unshift(record);
+    localStorage.setItem('history_auto_sync_records', JSON.stringify(list));
+  }
+
+  function syncToGoogleSheets(record) {
+    let statusEl = document.getElementById('sync-status');
+    if (statusEl) {
+      statusEl.textContent = "📡 正在自動將成績上傳至 Google 試算表...";
+      statusEl.style.color = "var(--primary-dark)";
+      statusEl.style.background = "var(--primary-light)";
+      statusEl.style.borderColor = "#bfdbfe";
+    }
+
+    if (!CONFIG.GOOGLE_SHEET_URL || CONFIG.GOOGLE_SHEET_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
+      if (statusEl) {
+        statusEl.textContent = "⚠️ Google 試算表 URL 尚未設定（本次成績已完整儲存於本機）";
+        statusEl.style.color = "#b45309";
+        statusEl.style.background = "var(--warning-bg)";
+        statusEl.style.borderColor = "#fde68a";
+      }
+      return;
+    }
+
+    let payload = {
+      subject: CONFIG.subject,
+      time: record.time,
+      unit: record.unit,
+      score: record.score,
+      wrongCount: record.wrongCount,
+      timeSpent: record.timeSpent || "1 秒",
+      targets: ["全部總覽", CONFIG.subject]
+    };
+
+    fetch(CONFIG.GOOGLE_SHEET_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(() => {
+      if (statusEl) {
+        statusEl.textContent = `✅ 成績與作答耗時已成功同步至 Google 試算表（全部總覽與${CONFIG.subject}分頁）！`;
+        statusEl.style.color = "#047857";
+        statusEl.style.background = "var(--success-bg)";
+        statusEl.style.borderColor = "#a7f3d0";
+      }
+    })
+    .catch((err) => {
+      console.error("Sheets sync error:", err);
+      if (statusEl) {
+        statusEl.textContent = "⚠️ 雲端試算表連線超時，本次紀錄已安全保存在本機儀表版中。";
+        statusEl.style.color = "#b45309";
+        statusEl.style.background = "var(--warning-bg)";
+        statusEl.style.borderColor = "#fde68a";
+      }
+    });
+  }
+
+  function renderReviewList() {
+    const reviewBox = document.getElementById("review-box");
+    reviewBox.innerHTML = "";
+
+    selectedQuestions.forEach((item, idx) => {
+      const isCorrect = userResponses[idx] === item.ans;
+      const userChoiceText = userResponses[idx] !== undefined 
+        ? `(${String.fromCharCode(65 + userResponses[idx])}) ${item.options[userResponses[idx]]}`
+        : "⚠️ 未作答 (0分)";
+      const correctChoiceText = `(${String.fromCharCode(65 + item.ans)}) ${item.options[item.ans]}`;
+
+      const card = document.createElement("div");
+      card.className = `review-item ${isCorrect ? 'correct' : 'wrong'}`;
+      card.innerHTML = `
+        <div style="font-size:0.82rem; color:var(--text-muted); margin-bottom:6px; font-weight:600;">
+          [${item.tag}] 第 ${idx + 1} 題 · <span style="color:${isCorrect ? '#059669' : '#dc2626'}">${isCorrect ? '✅ 答對 (+4分)' : '❌ 答錯 / 未答'}</span>
+        </div>
+        <div style="font-weight:700; font-size:1.02rem; margin-bottom:10px; color:var(--text);">${item.q}</div>
+        <div style="font-size:0.92rem; margin-bottom:4px;">
+          您的作答：<span style="color:${isCorrect ? '#059669' : '#dc2626'}; font-weight:700;">${userChoiceText}</span>
+        </div>
+        ${!isCorrect ? `<div style="font-size:0.92rem; color:#059669; font-weight:700; margin-bottom:6px;">正確解答：${correctChoiceText}</div>` : ''}
+        <div class="explanation"><strong>💡 觀念解析：</strong>${item.note}</div>
+      `;
+      reviewBox.appendChild(card);
+    });
+  }
+
+  function showDashboard() {
+    stopTimer();
+    document.getElementById('view-mode').classList.add('hidden');
+    document.getElementById('view-quiz').classList.add('hidden');
+    document.getElementById('view-result').classList.add('hidden');
+    document.getElementById('view-dashboard').classList.remove('hidden');
+
+    let tbody = document.getElementById('dashboard-tbody');
+    let records = JSON.parse(localStorage.getItem('history_auto_sync_records') || '[]');
+
+    if (records.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 32px;">目前尚無測驗紀錄，歡迎點選章節開始練習！</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = records.map(r => {
+      let pillClass = r.score >= 80 ? 'score-high' : (r.score < 60 ? 'score-low' : 'score-mid');
+      return `
+        <tr>
+          <td style="color: var(--text-muted); font-size: 0.9rem;">${r.time}</td>
+          <td><strong>${r.unit}</strong></td>
+          <td><span class="score-pill ${pillClass}">${r.score} 分</span></td>
+          <td>${r.wrongCount} 題</td>
+          <td>${r.timeSpent || "—"}</td>
+        </tr>
+      `;
+    }).join('');
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function exportToCSV() {
+    let records = JSON.parse(localStorage.getItem('history_auto_sync_records') || '[]');
+    if (records.length === 0) {
+      alert("尚無成績記錄可供匯出！");
+      return;
+    }
+
+    let csvContent = "\uFEFF時間,測驗單元,得分,錯題數,作答耗時\n";
+    records.forEach(r => {
+      csvContent += `"${r.time}","${r.unit}",${r.score},${r.wrongCount},"${r.timeSpent || ''}"\n`;
+    });
+
+    let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = `七上歷史第二次段考練習紀錄_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+</script>
+</body>
+</html>

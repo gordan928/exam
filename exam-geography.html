@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>國中二段地理線上測驗與成績監控儀表板系統</title>
+  <!-- 引入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入 Google Fonts (Inter + Noto Sans TC) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <!-- 引入 Phosphor Icons 圖示庫 -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', '"Noto Sans TC"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* 極淡點狀網格背景紋理 */
+    .bg-dot-pattern {
+      background-color: #f8fafc;
+      background-image: radial-gradient(rgba(148, 163, 184, 0.28) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    /* 等寬數字排版 (分數與計時器不跳動) */
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 柔和進場淡入動畫 */
+    @keyframes fadeInUp {
+      0% { opacity: 0; transform: translateY(10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeInUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* 彈出視窗縮放淡入動畫 */
+    @keyframes modalZoomIn {
+      0% { opacity: 0; transform: scale(0.95) translateY(8px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-modal-in {
+      animation: modalZoomIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* 隱藏自訂選項的原生 radio 外觀，改以視覺樣式呈現 */
+    .opt-radio-input {
+      position: absolute;
+      opacity: 0;
+      width: 1px;
+      height: 1px;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="bg-dot-pattern text-slate-800 min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-800 relative overflow-x-hidden">
+
+  <!-- 頂部柔和山海漸層光暈裝飾背景 -->
+  <div class="pointer-events-none fixed inset-x-0 top-0 -z-10 overflow-hidden h-[460px]">
+    <div class="absolute -top-28 left-1/4 w-[520px] h-[340px] rounded-full bg-gradient-to-tr from-emerald-200/45 via-teal-200/35 to-sky-200/35 blur-3xl"></div>
+    <div class="absolute -top-20 right-1/5 w-[420px] h-[300px] rounded-full bg-gradient-to-bl from-cyan-200/40 via-sky-100/30 to-emerald-100/30 blur-3xl"></div>
+  </div>
+
+  <!-- 毛玻璃黏性頂部導航列 -->
+  <header class="bg-white/80 backdrop-blur-xl border-b border-slate-200/80 sticky top-0 z-30 shadow-[0_1px_12px_rgba(15,23,42,0.03)]">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 sm:h-[72px] flex items-center justify-between gap-3">
+      <!-- 網站 Logo 與標題 -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-500 to-cyan-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/25 shrink-0 ring-4 ring-emerald-50">
+          <i class="ph-bold ph-globe-hemisphere-east text-2xl"></i>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-xl font-extrabold text-slate-900 tracking-tight leading-tight">國中二段地理線上測驗系統</h1>
+          <p class="text-[11px] sm:text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+            <span class="truncate">即測即評・成績監控儀表板・多科雲端雙寫入</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- 快速返回儀表板按鈕 (作答中 / 結算頁顯示) -->
+      <button id="headerBackBtn" onclick="handleHeaderBack()" class="hidden px-3.5 py-2 rounded-full text-xs sm:text-sm font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 shadow-sm flex items-center gap-1.5 transition cursor-pointer shrink-0">
+        <i class="ph-bold ph-arrow-left text-emerald-600"></i>
+        <span>返回儀表板</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 主要內容容器 -->
+  <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8">
+
+    <!-- ==================== 1. 測驗模式選單與監控儀表板 ==================== -->
+    <section id="menuSection" class="space-y-7 animate-fade-in">
+
+      <!-- Hero 歡迎與測驗啟動專區 -->
+      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 text-white p-6 sm:p-8 shadow-xl shadow-emerald-600/15 border border-white/15">
+        <!-- 背景微光裝飾 -->
+        <div class="pointer-events-none absolute -right-14 -top-14 w-64 h-64 rounded-full bg-white/15 blur-2xl"></div>
+        <div class="pointer-events-none absolute left-1/4 -bottom-24 w-72 h-56 rounded-full bg-cyan-300/20 blur-2xl"></div>
+
+        <div class="relative z-10">
+          <!-- 頂部標籤與規則說明 -->
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-xs font-semibold tracking-wide">
+              <i class="ph-fill ph-compass text-amber-300 text-sm"></i>
+              <span>七年級地理・第二次段考複習</span>
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/20 backdrop-blur-md border border-white/15 text-xs font-medium text-emerald-50">
+              <i class="ph-bold ph-list-checks text-emerald-200"></i>
+              <span>每次隨機自母池抽取 25 題・每題 4 分・滿分 100 分</span>
+            </span>
+          </div>
+
+          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight leading-snug mb-2">
+            探索台灣地形與海域，掌握二段核心考點
+          </h2>
+          <p class="text-sm sm:text-base text-emerald-50/90 leading-relaxed max-w-2xl mb-6">
+            挑選單課專區強化觀念，或直接挑戰跨單元綜合模擬考，系統將自動計時、提供詳盡解析並同步紀錄學習曲線。
+          </p>
+
+          <!-- 三大測驗入口互動卡片 -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- 入口 1：第3課 台灣的地形 -->
+            <button onclick="startQuiz('第3課 台灣的地形')" class="group text-left bg-white/95 hover:bg-white text-slate-800 rounded-2xl p-5 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-200 border border-white/60 flex flex-col justify-between cursor-pointer">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <i class="ph-bold ph-mountains text-2xl"></i>
+                  </span>
+                  <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80">單元專攻</span>
+                </div>
+                <h3 class="text-base sm:text-lg font-extrabold text-slate-900 group-hover:text-emerald-700 transition-colors mb-1">
+                  第3課 台灣的地形專區
+                </h3>
+                <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                  等高線、五大地形、內外營力與地形剖面判讀
+                </p>
+              </div>
+              <div class="flex items-center justify-between pt-3 border-t border-slate-100 text-xs font-bold text-emerald-600">
+                <span>立即開始測驗</span>
+                <i class="ph-bold ph-arrow-right text-sm group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </button>
+
+            <!-- 入口 2：第4課 台灣的海域 -->
+            <button onclick="startQuiz('第4課 台灣的海域')" class="group text-left bg-white/95 hover:bg-white text-slate-800 rounded-2xl p-5 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-200 border border-white/60 flex flex-col justify-between cursor-pointer">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="w-11 h-11 rounded-xl bg-cyan-100 text-cyan-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <i class="ph-bold ph-waves text-2xl"></i>
+                  </span>
+                  <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200/80">單元專攻</span>
+                </div>
+                <h3 class="text-base sm:text-lg font-extrabold text-slate-900 group-hover:text-cyan-700 transition-colors mb-1">
+                  第4課 台灣的海域專區
+                </h3>
+                <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                  四大海岸、離島成因、領海與黑潮洋流重點
+                </p>
+              </div>
+              <div class="flex items-center justify-between pt-3 border-t border-slate-100 text-xs font-bold text-cyan-600">
+                <span>立即開始測驗</span>
+                <i class="ph-bold ph-arrow-right text-sm group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </button>
+
+            <!-- 入口 3：第3~4課 綜合模擬考 -->
+            <button onclick="startQuiz('綜合模擬考')" class="group text-left bg-gradient-to-br from-slate-900 via-teal-950 to-slate-900 hover:from-slate-800 hover:to-teal-900 text-white rounded-2xl p-5 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-200 border border-teal-400/30 flex flex-col justify-between cursor-pointer relative overflow-hidden">
+              <div class="pointer-events-none absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-teal-400/20 blur-xl"></div>
+              <div class="relative z-10">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-400 to-indigo-500 text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                    <i class="ph-bold ph-trophy text-2xl"></i>
+                  </span>
+                  <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center gap-1">
+                    <i class="ph-fill ph-star text-[11px]"></i> 推薦挑戰
+                  </span>
+                </div>
+                <h3 class="text-base sm:text-lg font-extrabold text-white group-hover:text-teal-200 transition-colors mb-1">
+                  第3~4課 綜合模擬考
+                </h3>
+                <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                  跨單元混合抽題・完整模擬段考實戰節奏
+                </p>
+              </div>
+              <div class="relative z-10 flex items-center justify-between pt-3 border-t border-white/10 text-xs font-bold text-teal-300">
+                <span>挑戰全範圍模擬考</span>
+                <i class="ph-bold ph-arrow-right text-sm group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 成績監控儀表板卡片 -->
+      <div class="bg-white/95 backdrop-blur-sm rounded-3xl p-5 sm:p-7 shadow-sm border border-slate-200/80 space-y-6">
+        <!-- 儀表板標頭 -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/70 flex items-center justify-center">
+              <i class="ph-bold ph-chart-line-up text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-extrabold text-slate-900">成績監控儀表板</h3>
+              <p class="text-xs text-slate-500">即時統計本機作答數據與各單元熟練度</p>
+            </div>
+          </div>
+          <button onclick="openClearHistoryModal()" class="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-500 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 border border-slate-200/80 hover:border-rose-200 flex items-center gap-1.5 transition cursor-pointer">
+            <i class="ph-bold ph-trash"></i>
+            <span>清空本機歷程</span>
+          </button>
+        </div>
+
+        <!-- 4 大 KPI 數值統計卡片 -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+          <!-- KPI 1: 累計測驗次數 -->
+          <div class="bg-slate-50/90 rounded-2xl p-4 border border-slate-200/70 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-slate-500">累計測驗次數</span>
+              <span class="w-8 h-8 rounded-xl bg-teal-100/80 text-teal-700 flex items-center justify-center">
+                <i class="ph-bold ph-exam text-base"></i>
+              </span>
+            </div>
+            <div class="flex items-baseline gap-1">
+              <span id="dashTotalTests" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tabular-nums">0</span>
+              <span class="text-xs text-slate-400 font-medium">次</span>
+            </div>
+          </div>
+
+          <!-- KPI 2: 歷次平均分數 -->
+          <div class="bg-slate-50/90 rounded-2xl p-4 border border-slate-200/70 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-slate-500">歷次平均分數</span>
+              <span class="w-8 h-8 rounded-xl bg-sky-100/80 text-sky-700 flex items-center justify-center">
+                <i class="ph-bold ph-chart-bar text-base"></i>
+              </span>
+            </div>
+            <div class="flex items-baseline gap-1">
+              <span id="dashAvgScore" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tabular-nums">0</span>
+              <span class="text-xs text-slate-400 font-medium">分</span>
+            </div>
+          </div>
+
+          <!-- KPI 3: 最佳歷史成績 -->
+          <div class="bg-emerald-50/60 rounded-2xl p-4 border border-emerald-200/70 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-emerald-700">最佳歷史成績</span>
+              <span class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                <i class="ph-bold ph-medal text-base"></i>
+              </span>
+            </div>
+            <div class="flex items-baseline gap-1">
+              <span id="dashHighScore" class="text-2xl sm:text-3xl font-extrabold text-emerald-600 tabular-nums">0</span>
+              <span class="text-xs text-emerald-600/70 font-medium">分</span>
+            </div>
+          </div>
+
+          <!-- KPI 4: 累計錯誤題數 -->
+          <div class="bg-rose-50/60 rounded-2xl p-4 border border-rose-200/70 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-rose-700">累計錯誤題數</span>
+              <span class="w-8 h-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
+                <i class="ph-bold ph-warning-circle text-base"></i>
+              </span>
+            </div>
+            <div class="flex items-baseline gap-1">
+              <span id="dashTotalWrong" class="text-2xl sm:text-3xl font-extrabold text-rose-600 tabular-nums">0</span>
+              <span class="text-xs text-rose-600/70 font-medium">題</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 單元熟練度指標 -->
+        <div>
+          <div class="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-700 mb-3">
+            <i class="ph-bold ph-target text-emerald-600 text-base"></i>
+            <span>單元熟練度指標</span>
+          </div>
+          <div id="dashUnitStats" class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+            <!-- 由 JS 動態渲染 -->
+          </div>
+        </div>
+
+        <!-- 近期測驗歷程紀錄表格 -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-700">
+              <i class="ph-bold ph-clock-counter-clockwise text-teal-600 text-base"></i>
+              <span>近期測驗歷程紀錄</span>
+            </div>
+            <span class="text-[11px] text-slate-400">顯示最近 10 筆作答紀錄</span>
+          </div>
+          <div class="overflow-x-auto max-h-72 rounded-2xl border border-slate-200/80">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead class="bg-slate-50/95 backdrop-blur-sm sticky top-0 z-10 text-xs font-bold text-slate-500 border-b border-slate-200/80">
+                <tr>
+                  <th class="py-3 px-4 whitespace-nowrap">提交時間</th>
+                  <th class="py-3 px-4 whitespace-nowrap">測驗單元</th>
+                  <th class="py-3 px-4 whitespace-nowrap">得分</th>
+                  <th class="py-3 px-4 whitespace-nowrap">錯誤題數</th>
+                  <th class="py-3 px-4 whitespace-nowrap">作答耗時</th>
+                </tr>
+              </thead>
+              <tbody id="dashHistoryTableBody" class="divide-y divide-slate-100 bg-white">
+                <!-- 由 JS 動態渲染 -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 2. 作答進行中畫面 ==================== -->
+    <section id="quizSection" class="hidden animate-fade-in">
+      <!-- 黏性毛玻璃作答狀態列 -->
+      <div class="sticky top-[72px] sm:top-[84px] z-20 mb-6">
+        <div class="bg-white/90 backdrop-blur-xl rounded-2xl border border-slate-200/90 shadow-lg shadow-slate-200/50 overflow-hidden">
+          <div class="px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-3">
+            <!-- 左側：單元名稱與進度 -->
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+              <span id="currentUnitDisplay" class="px-3 py-1 rounded-full text-xs sm:text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80"></span>
+              <span id="answeredProgressText" class="text-xs sm:text-sm font-semibold text-slate-600 tabular-nums flex items-center gap-1">
+                <i class="ph-bold ph-check-square-offset text-emerald-500"></i>
+                <span>已作答 0 / 25 題</span>
+              </span>
+            </div>
+
+            <!-- 右側：即時碼表與繳卷按鈕 -->
+            <div class="flex items-center gap-2.5 sm:gap-3 ml-auto">
+              <div class="px-3 py-1.5 rounded-full bg-rose-50 border border-rose-200/80 text-rose-600 font-extrabold text-sm tabular-nums flex items-center gap-1.5">
+                <i class="ph-bold ph-timer text-base"></i>
+                <span id="timerDisplay">00:00</span>
+              </div>
+              <button onclick="submitQuiz()" class="px-4 py-2 rounded-full text-xs sm:text-sm font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition cursor-pointer">
+                <i class="ph-bold ph-paper-plane-tilt"></i>
+                <span>繳卷結算</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 底部即時作答進度條 -->
+          <div class="h-1.5 w-full bg-slate-100">
+            <div id="quizProgressBar" class="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 transition-all duration-300 ease-out" style="width: 0%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 25 題測驗題目列表 -->
+      <div id="questionsContainer" class="space-y-5"></div>
+
+      <!-- 底部繳卷動作列 -->
+      <div class="mt-8 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3 text-center sm:text-left">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 hidden sm:flex">
+            <i class="ph-bold ph-flag-checkered text-xl"></i>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-slate-800">準備好繳交試卷了嗎？</p>
+            <p id="bottomUnansweredHint" class="text-xs text-slate-500 mt-0.5">尚有 25 題未作答，確認無誤後即可點擊繳卷。</p>
+          </div>
+        </div>
+        <button onclick="submitQuiz()" class="w-full sm:w-auto px-7 py-3 rounded-full text-sm font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition cursor-pointer">
+          <i class="ph-bold ph-check-circle text-lg"></i>
+          <span>繳卷結算 / 提前交卷</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== 3. 結算與解析報告畫面 ==================== -->
+    <section id="resultSection" class="hidden space-y-6 animate-fade-in">
+      <!-- 動態色調分數結算橫幅 -->
+      <div id="scoreBanner" class="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-xl transition-all duration-300 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600">
+        <div class="pointer-events-none absolute -right-10 -top-10 w-56 h-56 rounded-full bg-white/15 blur-2xl"></div>
+        <div class="pointer-events-none absolute left-10 -bottom-16 w-60 h-44 rounded-full bg-black/10 blur-2xl"></div>
+
+        <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+          <!-- 左側：標題、評語與耗時 -->
+          <div class="text-center md:text-left space-y-2">
+            <div id="scoreFeedbackPill" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold border border-white/20">
+              <i class="ph-fill ph-sparkle text-amber-300"></i>
+              <span>測驗完成</span>
+            </div>
+            <h2 id="resultUnitTitle" class="text-2xl sm:text-3xl font-extrabold tracking-tight">測驗結算報告</h2>
+            <p id="timeSpentDisplay" class="text-sm sm:text-base text-white/90 font-medium"></p>
+
+            <!-- 雲端同步狀態膠囊 -->
+            <div class="pt-1">
+              <span id="syncStatus" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/20 backdrop-blur-md border border-white/15 text-xs font-medium text-white">
+                <i class="ph-bold ph-cloud-arrow-up animate-pulse"></i>
+                <span>雲端同步中...</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- 右側：大字分數展示 -->
+          <div class="bg-white/15 backdrop-blur-md border border-white/25 rounded-3xl px-8 py-5 text-center min-w-[180px] shadow-inner">
+            <div class="text-xs font-semibold text-white/80 uppercase tracking-wider mb-1">本次得分</div>
+            <div class="flex items-baseline justify-center gap-1">
+              <span id="scoreDisplay" class="text-5xl sm:text-6xl font-extrabold tabular-nums leading-none">0</span>
+              <span class="text-lg font-bold text-white/75">/ 100</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部操作按鈕 -->
+        <div class="relative z-10 mt-6 pt-5 border-t border-white/15 flex flex-wrap items-center justify-center md:justify-start gap-3">
+          <button onclick="resetToMenu()" class="px-5 py-2.5 rounded-full text-sm font-bold bg-white text-slate-800 hover:bg-slate-50 shadow-md flex items-center gap-1.5 transition cursor-pointer">
+            <i class="ph-bold ph-chart-line-up text-emerald-600"></i>
+            <span>返回監控儀表板</span>
+          </button>
+          <button onclick="startQuiz(currentUnitName)" class="px-5 py-2.5 rounded-full text-sm font-bold bg-black/20 hover:bg-black/30 text-white border border-white/25 backdrop-blur-sm flex items-center gap-1.5 transition cursor-pointer">
+            <i class="ph-bold ph-arrow-clockwise"></i>
+            <span>再測一次同單元</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 解析標題與篩選膠囊 -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-6 rounded-full bg-emerald-500"></span>
+          <h3 class="text-lg font-extrabold text-slate-900">題庫解析與作答檢視</h3>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="filterAllBtn" onclick="setAnalysisFilter('all')" class="px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold bg-slate-800 text-white shadow-sm transition cursor-pointer">
+            全部題目 (25)
+          </button>
+          <button id="filterWrongBtn" onclick="setAnalysisFilter('wrong')" class="px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold bg-white text-slate-600 hover:bg-rose-50 hover:text-rose-600 border border-slate-200 transition cursor-pointer">
+            僅看錯題 / 未答 (0)
+          </button>
+        </div>
+      </div>
+
+      <!-- 解析卡片列表 -->
+      <div id="analysisContainer" class="space-y-4"></div>
+    </section>
+
+  </main>
+
+  <!-- 頁尾 -->
+  <footer class="bg-white/80 backdrop-blur-md border-t border-slate-200/80 py-5 mt-12">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+      <p class="flex items-center gap-1.5 font-medium">
+        <i class="ph-fill ph-globe-hemisphere-east text-emerald-600 text-base"></i>
+        國中二段地理線上測驗系統・即測即評與學習歷程監控
+      </p>
+      <p class="text-slate-400">作答成績自動儲存於本機並同步雲端試算表</p>
+    </div>
+  </footer>
+
+  <!-- ==================== 自訂彈出確認視窗 (取代 native confirm) ==================== -->
+  <div id="clearHistoryModal" class="hidden fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 sm:p-7 shadow-2xl border border-slate-100 animate-modal-in">
+      <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mb-4">
+        <i class="ph-bold ph-trash text-2xl"></i>
+      </div>
+      <h3 class="text-lg font-extrabold text-slate-900 mb-1.5">清空本機測驗歷程？</h3>
+      <p class="text-sm text-slate-500 mb-6 leading-relaxed">
+        確定要清空本機的所有作答歷史與監控數據嗎？清除後將無法復原（雲端試算表紀錄不會受到影響）。
+      </p>
+      <div class="flex items-center justify-end gap-2.5">
+        <button onclick="closeClearHistoryModal()" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+          取消
+        </button>
+        <button onclick="confirmClearHistory()" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-500/20 transition cursor-pointer">
+          確定清空
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部 Toast 通知提示框 -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="bg-slate-900/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-xl border border-white/10 flex items-center gap-2.5 text-sm font-medium">
+      <i id="toastIcon" class="ph-fill ph-check-circle text-emerald-400 text-xl"></i>
+      <span id="toastMessage">操作成功</span>
+    </div>
+  </div>
+
+<script>
+/**
+ * 系統全域設定 (100% 保留原有設定與 Google Sheet 端點)
+ */
+const CONFIG = {
+  subject: "地理",
+  GOOGLE_SHEET_URL: "https://script.google.com/macros/s/AKfycbzH5hx88Onv0XBbX9jNTB5swbhMSsg8ukk8F_dnTFMrdkVNz_drSIYOU9RbLSsfEXWK/exec",
+  STORAGE_KEY: "GEO_TEST_HISTORY_V1"
+};
+
+// 補零防呆工具
+function pad(n) {
+  return n < 10 ? '0' + n : n;
+}
+
+// 格式化目前標準時間：YYYY-MM-DD HH:mm:ss
+function getFormattedCurrentTime() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = pad(now.getMonth() + 1);
+  const dd = pad(now.getDate());
+  const hh = pad(now.getHours());
+  const min = pad(now.getMinutes());
+  const ss = pad(now.getSeconds());
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+}
+
+/**
+ * 題庫母池 (100% 完整保留第3課與第4課原始題目)
+ */
+const QUESTION_BANK = {
+  unit3: [
+    { tag: "等高線特性", q: "關於等高線的基本特性，下列敘述何者完全正確？", options: ["相鄰兩條等高線之間的水平距離固定", "在垂直懸崖峭壁處，等高線會出現重疊現象", "等高線數值越大，代表坡度一定越陡峭", "等高線為開放線段，不會自行閉合"], ans: 1, exp: "等高線是高度相同點連成的閉合曲線；等高距固定，但圖上水平間距隨坡度而異。懸崖峭壁處等高線垂直疊合。" },
+    { tag: "坡度判讀", q: "在同一張等高線地形圖中，判斷坡度陡緩的主要依據為下列何者？", options: ["等高線間的疏密程度", "等高線標註的最高數值", "地圖圖幅面積大小", "圖例中色彩的深淺"], ans: 0, exp: "等高線密集表示短水平距離內落差劇烈（坡度陡）；等高線稀疏表示坡度平緩。" },
+    { tag: "地形判讀-河谷", q: "等高線呈 V 字形彎曲，若尖端指向「海拔高處」，該地形特徵為何？", options: ["山脊（稜線）", "河谷（山谷）", "鞍部", "斷崖"], ans: 1, exp: "河流水流侵蝕切割向源後退，等高線 V 字形尖端指向高處；山脊尖端則指向低處。" },
+    { tag: "工程選址-山脊與河谷", q: "公路工程若需橫越兩條等高線 V 字尖端指向低處的地質結構，最常採取的工程型態為何？", options: ["架設跨河高架橋梁", "開鑿穿山隧道", "興建防砂壩", "設置人工滯洪池"], ans: 1, exp: "等高線 V 字尖端指向低處為山脊（稜線），道路貫穿山脊稜線時通常開鑿隧道。" },
+    { tag: "地形特徵-盆地", q: "等高線呈封閉同心狀，數值「周圍高、中央低」，最符合台灣哪種地形？", options: ["山地", "丘陵", "盆地", "台地"], ans: 2, exp: "四周高、中間低平的地形為盆地（如臺北盆地、埔里盆地）。" },
+    { tag: "地形特徵-台地", q: "周邊等高線密集陡峭，但頂部平坦開闊如臺，在五大地形中稱為：", options: ["台地", "高原", "平原", "火山"], ans: 0, exp: "頂部平坦而邊緣陡峭的地形為台地（如桃園台地、八卦台地）。" },
+    { tag: "營力分類", q: "台灣高山林立、地層斷裂破碎，其最主要的「內營力」作用為何？", options: ["歐亞板塊與菲律賓海板塊擠壓造山", "河川長期的侵蝕向下切割", "強烈東北季風的風蝕作用", "沿海波浪的海蝕作用"], ans: 0, exp: "板塊擠壓運動源自地球內部能量，屬於內營力；風力、水流侵蝕堆積屬於外營力。" },
+    { tag: "地形高度標準", q: "地理學上區分「山地」與「丘陵」的傳統海拔高度界線約為多少公尺？", options: ["500 公尺", "1,000 公尺", "1,500 公尺", "2,000 公尺"], ans: 1, exp: "海拔 1,000 公尺以上且起伏劇烈者為山地；1,000 公尺以下具起伏者為丘陵。" },
+    { tag: "地圖工具-剖面圖", q: "若要直觀觀察地表沿某一基準線的垂直起伏與真實坡度起伏，應使用：", options: ["衛星遙測影像", "地形剖面圖", "行政區域劃分圖", "地質分布圖"], ans: 1, exp: "地形剖面圖能將等高線切面轉為垂直坐標曲線，清楚展示起伏側面。" },
+    { tag: "等高距推算", q: "若兩條計曲線分別標示為 100m 與 200m，中間細線將區間平分為 5 等分，則基本等高距為：", options: ["10 公尺", "20 公尺", "25 公尺", "50 公尺"], ans: 1, exp: "(200 - 100) / 5 = 20 公尺。" }
+  ],
+  unit4: [
+    { tag: "海岸類型-北部", q: "台灣北部海岸線彎曲曲折、多岬角灣澳，此種谷灣式海岸的主要成因為：", options: ["陸地沉降，海水侵入山谷", "沙洲與潟湖大規模淤積", "珊瑚礁裙礁隆起", "斷層直接陷落"], ans: 0, exp: "北部海岸為沉降型岩岸，海水淹沒丘陵山谷形成岬灣交錯，港闊水深（如基隆港）。" },
+    { tag: "海岸類型-西部", q: "台灣西部海岸平直單調、多沙洲與泥灘地，最適合發展下列何種經濟活動？", options: ["深水海運轉運港", "養殖漁業與鹽田", "浮潛觀賞熱帶魚群", "岩壁攀岩探險"], ans: 1, exp: "西部沙岸平緩水淺，潮間帶寬廣，適合發展魚塭養殖與傳統曬鹽。" },
+    { tag: "海岸類型-東部", q: "清水斷崖高聳逼近深海，此種東部險峻海岸地形的成因主要是：", options: ["河川下游泥沙堆積", "板塊碰撞與斷層抬升", "珊瑚遺骸沉積", "季風強烈吹拂"], ans: 1, exp: "東部海岸受菲律賓海板塊與歐亞板塊擠壓抬升，形成斷層岩岸，斷崖直下千仞。" },
+    { tag: "海岸類型-南部", q: "恆春半島裙礁發達、白沙細緻，造就珊瑚礁海岸的最關鍵自然環境為：", options: ["水質清澈、水溫溫暖且緯度低", "長年低溫、冰河堆積", "寒流經過、泥沙混濁", "強烈風蝕、無降水"], ans: 0, exp: "造礁珊瑚生長於 20°C 以上、清澈無泥沙的熱帶淺海，故分布於南部恆春半島及綠島、小琉球。" },
+    { tag: "島嶼成因-澎湖", q: "澎湖群島擁有著名的柱狀節理地形，在地質成因上屬於何種島嶼？", options: ["大陸島", "火山島（玄武岩質）", "珊瑚礁島", "泥沙沖積島"], ans: 1, exp: "澎湖群島為玄武岩熔岩多次自海底裂隙噴發冷卻凝固而成，屬火山島。" },
+    { tag: "島嶼成因-金門馬祖", q: "金門、馬祖列島主要由花崗岩構成，在冰河期曾與歐亞大陸相連，分類上屬於：", options: ["大陸島", "火山島", "珊瑚礁島", "人工築造島"], ans: 0, exp: "大陸島因海平面上升淹沒低地而與大陸分離（如金門、馬祖）。" },
+    { tag: "島嶼成因-小琉球", q: "台灣附屬離島中，唯一由珊瑚礁隆起形成的島嶼是：", options: ["綠島", "蘭嶼", "琉球嶼（小琉球）", "龜山島"], ans: 2, exp: "屏東外海的小琉球是台灣唯一的珊瑚礁離島；綠島、蘭嶼、龜山島皆為火山島。" },
+    { tag: "海域管轄-領海", q: "依據《聯合國海洋法公約》，沿海國享有完整國家主權的「領海」範圍為基線向外幾浬？", options: ["3 浬", "12 浬", "24 浬", "200 浬"], ans: 1, exp: "領海範圍為鄰接陸地基線向外延伸 12 浬（約 22.2 公里）。" },
+    { tag: "海域管轄-專屬經濟海域", q: "沿海國在專屬經濟海域（EEZ）享有探勘與開發海洋資源的專有權，其範圍自基線起算為：", options: ["12 浬", "24 浬", "100 浬", "200 浬"], ans: 3, exp: "專屬經濟海域為自基線起算 200 浬，國家在此範圍內擁有生物及非生物資源的主權權利。" },
+    { tag: "海洋洋流-黑潮", q: "終年流經台灣東部外海，具備水溫高、鹽度高且流速快特性的主要洋流為：", options: ["親潮", "黑潮主軸", "中國沿岸流", "加利福尼亞洋流"], ans: 1, exp: "黑潮源自低緯度赤道海域，為溫暖強勁的暖流，孕育東部豐富的海洋漁業生態。" }
+  ]
+};
+
+// 擴充題庫母池至各 100 題
+function populateBank() {
+  const variations = ["深入思考", "情境模擬", "概念圖解", "生活實務", "會考易錯題"];
+  ['unit3', 'unit4'].forEach(unitKey => {
+    const baseList = [...QUESTION_BANK[unitKey]];
+    let idx = 0;
+    while (QUESTION_BANK[unitKey].length < 100) {
+      const parent = baseList[idx % baseList.length];
+      const varTag = variations[QUESTION_BANK[unitKey].length % variations.length];
+      QUESTION_BANK[unitKey].push({
+        tag: `${parent.tag} (${varTag})`,
+        q: `【${varTag}】${parent.q}`,
+        options: [...parent.options],
+        ans: parent.ans,
+        exp: `【觀念辨析】本題測驗要點為「${parent.tag}」。${parent.exp}`
+      });
+      idx++;
+    }
+  });
+}
+populateBank();
+
+/**
+ * 儀表板資料管理 (localStorage)
+ */
+function getHistoryRecords() {
+  try {
+    const data = localStorage.getItem(CONFIG.STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function saveRecordToLocal(rec) {
+  const list = getHistoryRecords();
+  list.unshift(rec); // 最新擺前面
+  localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(list));
+  refreshDashboard();
+}
+
+// 開啟自訂清空確認視窗
+function openClearHistoryModal() {
+  document.getElementById("clearHistoryModal").classList.remove("hidden");
+}
+
+function closeClearHistoryModal() {
+  document.getElementById("clearHistoryModal").classList.add("hidden");
+}
+
+// 執行清空本機歷程
+function confirmClearHistory() {
+  localStorage.removeItem(CONFIG.STORAGE_KEY);
+  closeClearHistoryModal();
+  refreshDashboard();
+  showToast("已清空本機測驗歷程紀錄");
+}
+
+// 單元視覺配色對應表
+const UNIT_META = {
+  "第3課 台灣的地形": {
+    icon: "ph-mountains",
+    badge: "bg-emerald-50 text-emerald-700 border-emerald-200/80",
+    bar: "from-emerald-500 to-teal-400",
+    iconBg: "bg-emerald-100 text-emerald-600"
+  },
+  "第4課 台灣的海域": {
+    icon: "ph-waves",
+    badge: "bg-cyan-50 text-cyan-700 border-cyan-200/80",
+    bar: "from-cyan-500 to-sky-400",
+    iconBg: "bg-cyan-100 text-cyan-600"
+  },
+  "綜合模擬考": {
+    icon: "ph-trophy",
+    badge: "bg-indigo-50 text-indigo-700 border-indigo-200/80",
+    bar: "from-teal-500 to-indigo-500",
+    iconBg: "bg-indigo-100 text-indigo-600"
+  }
+};
+
+// 刷新並渲染儀表板數據
+function refreshDashboard() {
+  const records = getHistoryRecords();
+  
+  // 基礎指標計算
+  const totalTests = records.length;
+  let totalScore = 0;
+  let highScore = 0;
+  let totalWrong = 0;
+  
+  const unitStatsMap = {
+    "第3課 台灣的地形": { count: 0, totalScore: 0 },
+    "第4課 台灣的海域": { count: 0, totalScore: 0 },
+    "綜合模擬考": { count: 0, totalScore: 0 }
+  };
+
+  records.forEach(r => {
+    totalScore += r.score;
+    if (r.score > highScore) highScore = r.score;
+    totalWrong += r.wrongCount;
+    if (unitStatsMap[r.unit]) {
+      unitStatsMap[r.unit].count++;
+      unitStatsMap[r.unit].totalScore += r.score;
+    }
+  });
+
+  const avgScore = totalTests > 0 ? Math.round(totalScore / totalTests) : 0;
+
+  // 更新 KPI DOM
+  document.getElementById("dashTotalTests").textContent = totalTests;
+  document.getElementById("dashAvgScore").textContent = avgScore;
+  document.getElementById("dashHighScore").textContent = highScore;
+  document.getElementById("dashTotalWrong").textContent = totalWrong;
+
+  // 更新單元熟練度指標卡片 (含水平進度條)
+  const unitStatsContainer = document.getElementById("dashUnitStats");
+  unitStatsContainer.innerHTML = "";
+  for (const [unitName, uData] of Object.entries(unitStatsMap)) {
+    const hasData = uData.count > 0;
+    const uAvg = hasData ? Math.round(uData.totalScore / uData.count) : 0;
+    const meta = UNIT_META[unitName] || UNIT_META["綜合模擬考"];
+
+    const box = document.createElement("div");
+    box.className = "bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs hover:border-emerald-300 transition";
+    box.innerHTML = `
+      <div class="flex items-center justify-between gap-2 mb-3">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="w-8 h-8 rounded-xl ${meta.iconBg} flex items-center justify-center shrink-0">
+            <i class="ph-bold ${meta.icon} text-base"></i>
+          </span>
+          <span class="font-bold text-sm text-slate-800 truncate">${unitName}</span>
+        </div>
+        <span class="text-xs font-semibold text-slate-400 shrink-0">${uData.count} 次</span>
+      </div>
+      <div class="flex items-baseline justify-between mb-1.5">
+        <span class="text-xs text-slate-500">平均熟練度</span>
+        <span class="text-sm font-extrabold tabular-nums ${hasData ? 'text-slate-900' : 'text-slate-400'}">
+          ${hasData ? `${uAvg} 分` : '尚未測驗'}
+        </span>
+      </div>
+      <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+        <div class="h-full rounded-full bg-gradient-to-r ${meta.bar} transition-all duration-500" style="width: ${hasData ? uAvg : 0}%;"></div>
+      </div>
+    `;
+    unitStatsContainer.appendChild(box);
+  }
+
+  // 更新歷史表格 DOM
+  const tableBody = document.getElementById("dashHistoryTableBody");
+  tableBody.innerHTML = "";
+  if (records.length === 0) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="py-10 px-4 text-center">
+          <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2.5">
+            <i class="ph-duotone ph-clipboard-text text-2xl"></i>
+          </div>
+          <p class="text-sm font-semibold text-slate-600">尚無作答紀錄</p>
+          <p class="text-xs text-slate-400 mt-0.5">點擊上方任一地理單元卡片，即可開始您的第一次測驗</p>
+        </td>
+      </tr>
+    `;
+  } else {
+    records.slice(0, 10).forEach(r => {
+      const meta = UNIT_META[r.unit] || UNIT_META["綜合模擬考"];
+      let scorePillClass = "bg-amber-50 text-amber-700 border-amber-200";
+      if (r.score >= 80) {
+        scorePillClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
+      } else if (r.score < 60) {
+        scorePillClass = "bg-rose-50 text-rose-700 border-rose-200";
+      }
+
+      const tr = document.createElement("tr");
+      tr.className = "hover:bg-slate-50/90 transition-colors";
+      tr.innerHTML = `
+        <td class="py-3 px-4 text-xs text-slate-500 font-mono whitespace-nowrap">${r.time}</td>
+        <td class="py-3 px-4 whitespace-nowrap">
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${meta.badge}">
+            <i class="ph-bold ${meta.icon}"></i>
+            <span>${r.unit}</span>
+          </span>
+        </td>
+        <td class="py-3 px-4 whitespace-nowrap">
+          <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-extrabold tabular-nums border ${scorePillClass}">
+            ${r.score} 分
+          </span>
+        </td>
+        <td class="py-3 px-4 text-xs font-semibold text-slate-600 tabular-nums whitespace-nowrap">${r.wrongCount} 題</td>
+        <td class="py-3 px-4 text-xs text-slate-500 tabular-nums whitespace-nowrap">${r.timeSpent}</td>
+      `;
+      tableBody.appendChild(tr);
+    });
+  }
+}
+
+/**
+ * 測驗運作狀態變數
+ */
+let currentQuizList = [];
+let currentUnitName = "";
+let timerInterval = null;
+let startTime = null;
+let lastUserAnswers = [];
+let currentAnalysisFilter = "all"; // 'all' | 'wrong'
+
+// 頂部返回按鈕行為
+function handleHeaderBack() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  resetToMenu();
+}
+
+// 開始測驗
+function startQuiz(unitName) {
+  currentUnitName = unitName;
+  
+  let pool = [];
+  if (unitName === "第3課 台灣的地形") {
+    pool = [...QUESTION_BANK.unit3];
+  } else if (unitName === "第4課 台灣的海域") {
+    pool = [...QUESTION_BANK.unit4];
+  } else {
+    pool = [...QUESTION_BANK.unit3, ...QUESTION_BANK.unit4];
+  }
+  
+  pool.sort(() => Math.random() - 0.5);
+  currentQuizList = pool.slice(0, 25);
+  
+  document.getElementById("menuSection").classList.add("hidden");
+  document.getElementById("resultSection").classList.add("hidden");
+  document.getElementById("quizSection").classList.remove("hidden");
+  document.getElementById("headerBackBtn").classList.remove("hidden");
+  document.getElementById("currentUnitDisplay").textContent = unitName;
+  
+  renderQuestions();
+  updateQuizProgress();
+  startTimer();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 渲染 25 道題目卡片
+function renderQuestions() {
+  const container = document.getElementById("questionsContainer");
+  container.innerHTML = "";
+  const letters = ['A', 'B', 'C', 'D'];
+  
+  currentQuizList.forEach((item, qIdx) => {
+    const card = document.createElement("div");
+    card.className = "bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-sm hover:border-emerald-200 transition";
+    
+    let optHtml = "";
+    item.options.forEach((opt, oIdx) => {
+      optHtml += `
+        <label id="opt_box_${qIdx}_${oIdx}" class="opt-label group relative flex items-center gap-3.5 p-3.5 rounded-xl border border-slate-200 bg-slate-50/40 hover:bg-emerald-50/40 hover:border-emerald-300 cursor-pointer transition-all">
+          <input type="radio" class="opt-radio-input" name="q_${qIdx}" value="${oIdx}" onchange="handleOptionChange(${qIdx}, ${oIdx})">
+          <span id="opt_badge_${qIdx}_${oIdx}" class="w-7 h-7 rounded-full bg-white border border-slate-300 text-slate-600 text-xs font-extrabold flex items-center justify-center shrink-0 transition-colors">
+            ${letters[oIdx]}
+          </span>
+          <span class="text-sm sm:text-[15px] text-slate-700 font-medium leading-relaxed">${opt}</span>
+        </label>
+      `;
+    });
+    
+    card.innerHTML = `
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3.5">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-white text-xs font-extrabold tabular-nums">第 ${qIdx + 1} 題</span>
+          <span class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200/70 text-xs font-semibold">${item.tag}</span>
+        </div>
+        <span class="text-xs font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full">4 分</span>
+      </div>
+      <div class="text-base sm:text-[17px] font-bold text-slate-900 leading-relaxed mb-4">${item.q}</div>
+      <div class="space-y-2.5">${optHtml}</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// 選項點擊高亮與即時進度條更新
+function handleOptionChange(qIdx, selectedIdx) {
+  for (let i = 0; i < 4; i++) {
+    const box = document.getElementById(`opt_box_${qIdx}_${i}`);
+    const badge = document.getElementById(`opt_badge_${qIdx}_${i}`);
+    if (!box || !badge) continue;
+
+    if (i === selectedIdx) {
+      box.className = "opt-label group relative flex items-center gap-3.5 p-3.5 rounded-xl border-2 border-emerald-500 bg-emerald-50/70 shadow-xs cursor-pointer transition-all";
+      badge.className = "w-7 h-7 rounded-full bg-emerald-600 border border-emerald-600 text-white text-xs font-extrabold flex items-center justify-center shrink-0 transition-colors";
+    } else {
+      box.className = "opt-label group relative flex items-center gap-3.5 p-3.5 rounded-xl border border-slate-200 bg-slate-50/40 hover:bg-emerald-50/40 hover:border-emerald-300 cursor-pointer transition-all";
+      badge.className = "w-7 h-7 rounded-full bg-white border border-slate-300 text-slate-600 text-xs font-extrabold flex items-center justify-center shrink-0 transition-colors";
+    }
+  }
+  updateQuizProgress();
+}
+
+// 計算並更新已作答題數與進度條
+function updateQuizProgress() {
+  const total = currentQuizList.length;
+  let answered = 0;
+  for (let i = 0; i < total; i++) {
+    if (document.querySelector(`input[name="q_${i}"]:checked`)) {
+      answered++;
+    }
+  }
+  const unanswered = total - answered;
+  const pct = total > 0 ? Math.round((answered / total) * 100) : 0;
+
+  document.getElementById("answeredProgressText").innerHTML = `
+    <i class="ph-bold ph-check-square-offset text-emerald-500"></i>
+    <span>已作答 ${answered} / ${total} 題</span>
+  `;
+  document.getElementById("quizProgressBar").style.width = `${pct}%`;
+
+  const hintElem = document.getElementById("bottomUnansweredHint");
+  if (unanswered === 0) {
+    hintElem.innerHTML = `<span class="text-emerald-600 font-semibold">太棒了！全部 ${total} 題皆已完成作答，可以點擊繳卷。</span>`;
+  } else {
+    hintElem.textContent = `目前尚有 ${unanswered} 題未作答，確認無誤後即可點擊繳卷。`;
+  }
+}
+
+function startTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  startTime = new Date();
+  const timerElem = document.getElementById("timerDisplay");
+  timerElem.textContent = "00:00";
+  
+  timerInterval = setInterval(() => {
+    const diffSec = Math.floor((new Date() - startTime) / 1000);
+    const m = pad(Math.floor(diffSec / 60));
+    const s = pad(diffSec % 60);
+    timerElem.textContent = `${m}:${s}`;
+  }, 1000);
+}
+
+function calculateTimeSpentString(start, end) {
+  let elapsed = Math.floor((end - start) / 1000);
+  if (elapsed < 1) elapsed = 1;
+  const mins = Math.floor(elapsed / 60);
+  const secs = elapsed % 60;
+  return mins === 0 ? `${secs} 秒` : `${mins} 分 ${secs} 秒`;
+}
+
+/**
+ * 繳卷結算 / 提前交卷
+ * 防呆核心：先完成耗時文字字串計算，再呼叫 clearInterval
+ */
+function submitQuiz() {
+  const endTime = new Date();
+  
+  // 1. 【防呆規範核心】：在停止計時前先換算好中文耗時字串
+  const timeSpentString = calculateTimeSpentString(startTime, endTime);
+  
+  // 2. 停止計時器
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  
+  // 3. 取得 YYYY-MM-DD HH:mm:ss
+  const recordTime = getFormattedCurrentTime();
+  
+  // 4. 計算分數
+  let score = 0;
+  let wrongCount = 0;
+  const userAnswers = [];
+  
+  currentQuizList.forEach((q, idx) => {
+    const selected = document.querySelector(`input[name="q_${idx}"]:checked`);
+    const userAns = selected ? parseInt(selected.value) : -1;
+    userAnswers.push(userAns);
+    
+    if (userAns === q.ans) {
+      score += 4;
+    } else {
+      wrongCount++;
+    }
+  });
+
+  // 5. 封裝標準紀錄
+  const record = {
+    subject: CONFIG.subject,
+    time: recordTime,
+    unit: currentUnitName,
+    score: score,
+    wrongCount: wrongCount,
+    timeSpent: timeSpentString,
+    targets: ["全部總覽", CONFIG.subject]
+  };
+
+  // 6. 保存至本機儀表板
+  saveRecordToLocal(record);
+
+  // 7. 切換至結果畫面
+  lastUserAnswers = userAnswers;
+  currentAnalysisFilter = "all";
+  showResultView(record, userAnswers);
+
+  // 8. 雲端非同步雙寫入 (no-cors)
+  sendToGoogleSheet(record);
+}
+
+// 顯示結算報告畫面
+function showResultView(record, userAnswers) {
+  document.getElementById("quizSection").classList.add("hidden");
+  document.getElementById("resultSection").classList.remove("hidden");
+  document.getElementById("headerBackBtn").classList.remove("hidden");
+  
+  // 依據分數動態調整橫幅漸層與鼓勵標語
+  const banner = document.getElementById("scoreBanner");
+  const feedbackPill = document.getElementById("scoreFeedbackPill");
+
+  if (record.score >= 80) {
+    banner.className = "relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-emerald-600/20 transition-all duration-300 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600";
+    feedbackPill.innerHTML = `<i class="ph-fill ph-trophy text-amber-300"></i><span>表現優異・觀念非常扎實！</span>`;
+  } else if (record.score >= 60) {
+    banner.className = "relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-sky-600/20 transition-all duration-300 bg-gradient-to-br from-sky-600 via-blue-600 to-amber-500";
+    feedbackPill.innerHTML = `<i class="ph-fill ph-thumbs-up text-amber-200"></i><span>穩定進步中・再複習錯題就能衝高分！</span>`;
+  } else {
+    banner.className = "relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-rose-600/20 transition-all duration-300 bg-gradient-to-br from-rose-600 via-pink-600 to-orange-500";
+    feedbackPill.innerHTML = `<i class="ph-fill ph-fire text-amber-200"></i><span>別氣餒・從錯題解析開始一步步補強！</span>`;
+  }
+
+  document.getElementById("resultUnitTitle").textContent = `${record.unit} 測驗結果`;
+  document.getElementById("scoreDisplay").textContent = record.score;
+  document.getElementById("timeSpentDisplay").textContent = `作答耗時：${record.timeSpent} ｜ 答錯 / 未答：${record.wrongCount} 題`;
+
+  // 更新篩選按鈕數字
+  document.getElementById("filterAllBtn").textContent = `全部題目 (${currentQuizList.length})`;
+  document.getElementById("filterWrongBtn").textContent = `僅看錯題 / 未答 (${record.wrongCount})`;
+
+  setAnalysisFilter("all");
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 切換解析篩選模式 ('all' | 'wrong')
+function setAnalysisFilter(mode) {
+  currentAnalysisFilter = mode;
+  const allBtn = document.getElementById("filterAllBtn");
+  const wrongBtn = document.getElementById("filterWrongBtn");
+
+  if (mode === "all") {
+    allBtn.className = "px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold bg-slate-800 text-white shadow-sm transition cursor-pointer";
+    wrongBtn.className = "px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold bg-white text-slate-600 hover:bg-rose-50 hover:text-rose-600 border border-slate-200 transition cursor-pointer";
+  } else {
+    allBtn.className = "px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 transition cursor-pointer";
+    wrongBtn.className = "px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold bg-rose-600 text-white shadow-sm shadow-rose-500/20 transition cursor-pointer";
+  }
+
+  renderAnalysisCards();
+}
+
+// 渲染解析卡片
+function renderAnalysisCards() {
+  const container = document.getElementById("analysisContainer");
+  container.innerHTML = "";
+  const letters = ['A', 'B', 'C', 'D'];
+  let visibleCount = 0;
+
+  currentQuizList.forEach((q, idx) => {
+    const uAns = lastUserAnswers[idx];
+    const isCorrect = uAns === q.ans;
+    const isUnanswered = uAns === -1;
+
+    if (currentAnalysisFilter === "wrong" && isCorrect) {
+      return;
+    }
+    visibleCount++;
+    
+    const card = document.createElement("div");
+    const borderAccent = isCorrect ? "border-l-emerald-500" : "border-l-rose-500";
+    card.className = `bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 border-l-4 ${borderAccent} shadow-sm`;
+    
+    const statusBadge = isCorrect
+      ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><i class="ph-bold ph-check"></i> 答對 +4分</span>`
+      : (isUnanswered
+          ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200"><i class="ph-bold ph-minus-circle"></i> 未作答 0分</span>`
+          : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200"><i class="ph-bold ph-x"></i> 答錯 0分</span>`);
+
+    let optList = "";
+    q.options.forEach((opt, oIdx) => {
+      let rowClass = "flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl text-sm border border-transparent text-slate-600 bg-slate-50/70";
+      let iconHtml = "";
+
+      if (oIdx === q.ans) {
+        rowClass = "flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl text-sm border border-emerald-200 bg-emerald-50 text-emerald-800 font-bold";
+        iconHtml = `<i class="ph-fill ph-check-circle text-emerald-600 text-lg shrink-0"></i>`;
+      } else if (oIdx === uAns && !isCorrect) {
+        rowClass = "flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl text-sm border border-rose-200 bg-rose-50 text-rose-800 font-semibold";
+        iconHtml = `<i class="ph-fill ph-x-circle text-rose-500 text-lg shrink-0"></i>`;
+      }
+
+      optList += `
+        <div class="${rowClass}">
+          <span>(${letters[oIdx]}) ${opt}</span>
+          ${iconHtml}
+        </div>
+      `;
+    });
+
+    card.innerHTML = `
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-extrabold tabular-nums">第 ${idx + 1} 題</span>
+          <span class="px-2.5 py-1 rounded-lg bg-slate-50 text-slate-600 border border-slate-200/80 text-xs font-semibold">${q.tag}</span>
+        </div>
+        <div>${statusBadge}</div>
+      </div>
+      <div class="text-base font-bold text-slate-900 leading-relaxed mb-3.5">${q.q}</div>
+      <div class="space-y-2 mb-4">${optList}</div>
+      <div class="rounded-xl bg-teal-50/60 border border-teal-200/70 p-4 text-sm text-slate-700 space-y-1.5">
+        <div class="flex items-center gap-1.5 font-bold text-teal-800">
+          <i class="ph-fill ph-lightbulb text-amber-500 text-base"></i>
+          <span>觀念解析</span>
+        </div>
+        <div class="text-xs sm:text-sm"><strong class="text-emerald-700">正確答案：</strong>(${letters[q.ans]}) ${q.options[q.ans]}</div>
+        <div class="text-xs sm:text-sm leading-relaxed text-slate-600">${q.exp}</div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  // 若篩選錯題時全對，顯示滿分慶祝空狀態
+  if (visibleCount === 0) {
+    container.innerHTML = `
+      <div class="bg-white rounded-3xl border border-emerald-200 p-10 text-center shadow-sm">
+        <div class="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+          <i class="ph-fill ph-confetti text-3xl"></i>
+        </div>
+        <h4 class="text-lg font-extrabold text-slate-900 mb-1">太神啦！完全沒有錯題！</h4>
+        <p class="text-sm text-slate-500">本次測驗全部答對，你可以切換回「全部題目」重溫每一題的重點觀念。</p>
+      </div>
+    `;
+  }
+}
+
+// 雲端非同步雙寫入 (完整保留 no-cors POST 邏輯)
+function sendToGoogleSheet(record) {
+  const syncElem = document.getElementById("syncStatus");
+  
+  if (!CONFIG.GOOGLE_SHEET_URL || CONFIG.GOOGLE_SHEET_URL === "YOUR_APPS_SCRIPT_URL") {
+    syncElem.innerHTML = `<i class="ph-bold ph-info"></i><span>提示：尚未綁定 Google Sheet URL，紀錄僅於本機儀表板儲存。</span>`;
+    return;
+  }
+  
+  syncElem.innerHTML = `<i class="ph-bold ph-cloud-arrow-up animate-pulse"></i><span>正在將作答數據雙寫入雲端試算表（全部總覽 / 地理）...</span>`;
+
+  const payload = {
+    subject: record.subject,
+    time: record.time,
+    unit: record.unit,
+    score: record.score,
+    wrongCount: record.wrongCount,
+    timeSpent: record.timeSpent,
+    targets: record.targets
+  };
+
+  fetch(CONFIG.GOOGLE_SHEET_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+  .then(() => {
+    syncElem.innerHTML = `<i class="ph-fill ph-cloud-check text-emerald-300"></i><span>作答紀錄已即時雙寫入「全部總覽」與「地理」分頁！</span>`;
+    showToast("成績已同步至雲端試算表");
+  })
+  .catch(err => {
+    console.error("同步失敗:", err);
+    syncElem.innerHTML = `<i class="ph-fill ph-warning-circle text-amber-300"></i><span>雲端同步中斷，但本地儀表板已安全儲存。</span>`;
+    showToast("雲端同步中斷，本機已儲存", "error");
+  });
+}
+
+function resetToMenu() {
+  document.getElementById("resultSection").classList.add("hidden");
+  document.getElementById("quizSection").classList.add("hidden");
+  document.getElementById("headerBackBtn").classList.add("hidden");
+  document.getElementById("menuSection").classList.remove("hidden");
+  refreshDashboard();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Toast 通知提示
+let toastTimer = null;
+function showToast(msg, type = "success") {
+  const toast = document.getElementById("toast");
+  const icon = document.getElementById("toastIcon");
+  const text = document.getElementById("toastMessage");
+
+  text.textContent = msg;
+  icon.className = type === "error"
+    ? "ph-fill ph-warning-circle text-rose-400 text-xl"
+    : "ph-fill ph-check-circle text-emerald-400 text-xl";
+
+  toast.classList.remove("translate-y-24", "opacity-0");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.classList.add("translate-y-24", "opacity-0");
+  }, 3000);
+}
+
+// 點擊 Modal 遮罩背景關閉
+window.addEventListener("click", (e) => {
+  const modal = document.getElementById("clearHistoryModal");
+  if (e.target === modal) {
+    closeClearHistoryModal();
+  }
+});
+
+// 頁面初始化
+window.addEventListener("DOMContentLoaded", () => {
+  refreshDashboard();
+});
+</script>
+
+</body>
+</html>
